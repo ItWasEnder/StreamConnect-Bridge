@@ -1,4 +1,5 @@
 import express, { Express, Request, Response } from 'express';
+import cors from 'cors';
 import { STATUS, Server } from './Server.js';
 import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import bodyParser from 'body-parser';
@@ -12,6 +13,8 @@ export abstract class WebServerInst extends Server {
 		super(service);
 		this.app = express();
 		this.app.use(bodyParser.json());
+		this.app.use(cors());
+		
 		this.port = port;
 		this.service = service;
 
