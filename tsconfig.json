@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+        // "baseUrl": "./",
+        // "paths": {
+        //     "@connections/*": ["src/connections/*"]
+        // },
+		"target": "es6",
+		"module": "es2020",
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"strict": false,
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "**/*.spec.ts"]
+}

@@ -1,0 +1,24 @@
+[
+	{
+		"id": "tikfinity",
+		"enabled": true,
+		"name": "Tikfinity - Webserver",
+		"description": "This will host an api to allow tikfinity app interations",
+		"type": "webserver",
+		"connection": {
+			"host": "localhost",
+			"apiKey": "",
+			"port": 8832
+		}
+	},
+	{
+		"id": "tits",
+		"enabled": true,
+		"name": "T.I.T.S - Websocket",
+		"description": "This will connect to TITS to control items and triggers",
+		"type": "websocket",
+		"connection": {
+			"url": "ws://127.0.0.1:42069/websocket"
+		}
+	}
+]

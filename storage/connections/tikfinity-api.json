@@ -1,0 +1,12 @@
+{
+	"id": "tikfinity",
+    "enabled": true,
+    "name": "Tikfinity - Webserver",
+    "description": "This will host an api to allow tikfinity app interations",
+    "type": "webserver",
+	"connection": {
+		"host": "localhost",
+		"apiKey": "",
+		"port": 8832
+	}
+}
