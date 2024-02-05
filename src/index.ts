@@ -37,6 +37,8 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 // Run the program
+console.clear();
+
 loadConfigs();
 setupHandlers();
 
