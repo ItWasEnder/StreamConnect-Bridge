@@ -201,28 +201,34 @@ function loadConfigs() {
 }
 
 function setupHandlers() {
-	try {
-		setupTitsService();
-	} catch (error) {
-		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: 'Error occured trying to setup TITS service...' }
+	if (cm.getConfigs().length === 0) {
+		EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			data: { message: 'No configurations found. Please create \"storage/modules.json\"' }
 		});
-		console.error(error);
-	}
+	} else {
+		try {
+			setupTitsService();
+		} catch (error) {
+			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				data: { message: 'Error occured trying to setup TITS service...' }
+			});
+			console.error(error);
+		}
 
-	try {
-		setupTikfinityService();
-	} catch (error) {
-		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: 'Error occured trying to setup tikfinity service...' }
-		});
-		console.error(error);
+		try {
+			setupTikfinityService();
+		} catch (error) {
+			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				data: { message: 'Error occured trying to setup tikfinity service...' }
+			});
+			console.error(error);
+		}
 	}
 }
 
 function setupTikfinityService() {
 	const config: ConnectionConfig = cm.getConfig('tikfinity');
-	if (config) {
+	if (config?.enabled) {
 		const tikfinityHandler: TikfinityWebServerHandler = new TikfinityWebServerHandler(config);
 		cm.addInstance(config.id, tikfinityHandler);
 
@@ -233,7 +239,7 @@ function setupTikfinityService() {
 
 function setupTitsService() {
 	const config: ConnectionConfig = cm.getConfig('tits');
-	if (config) {
+	if (config?.enabled) {
 		const titsHandler: TITSWebSocketHandler = new TITSWebSocketHandler(config);
 		cm.addInstance(config.id, titsHandler);
 

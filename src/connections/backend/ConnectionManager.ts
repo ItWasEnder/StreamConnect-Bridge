@@ -1,7 +1,8 @@
+import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import { ConnectionConfig } from './Connection.js';
+import { Server } from './Server.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Server } from './Server.js';
 
 export class ConnectionManager {
 	private configs: Map<string, ConnectionConfig>;
@@ -13,24 +14,26 @@ export class ConnectionManager {
 	}
 
 	loadConfigs(): void {
-		const filePath = path.join(process.cwd(), 'storage/connections');
+		// try {
+			const filePath = path.join(process.cwd(), 'storage', 'modules.json');
+			const rawData = fs.readFileSync(filePath, 'utf-8');
+			const config = JSON.parse(rawData);
 
-		if (!fs.existsSync(filePath)) {
-			throw new Error(`File not found: ${filePath}`);
-		}
-
-		// for each file in the directory
-		const files = fs.readdirSync(filePath);
-
-		for (const file of files) {
-			try {
-				const fileData = fs.readFileSync(path.join(filePath, file), 'utf-8');
-				const connection = ConnectionConfig.fromJson(fileData);
+			// for each module in the file
+			for (const module of config) {
+				const connection = new ConnectionConfig(
+					module.id,
+					module.enabled,
+					module.name,
+					module.description,
+					module.type,
+					module.connection
+				);
 				this.addConfig(connection.id, connection);
-			} catch (error) {
-				console.error(error);
 			}
-		}
+		// } catch (error) {
+		// 	throw error;
+		// }
 	}
 
 	addConfig(key: string, config: ConnectionConfig): void {
@@ -67,14 +70,14 @@ export class ConnectionManager {
 		this.managedInstances.set(key, instance);
 	}
 
-	getInstance(key: string): Server|null {
+	getInstance(key: string): Server | null {
 		const instance = this.managedInstances.get(key);
 		if (!instance) {
 			return null;
 		}
 		return instance;
 	}
-	
+
 	getInstances(): Server[] {
 		return Array.from(this.managedInstances.values());
 	}
