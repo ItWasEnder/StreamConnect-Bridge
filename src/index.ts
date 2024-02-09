@@ -15,10 +15,13 @@ import {
 	TITS_ACTIONS
 } from './connections/TITSHandler.js';
 import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
+import { TikTokHandler } from './connections/TikTokHandler.js';
+import chalk from 'chalk';
 
 const cm: ConnectionManager = new ConnectionManager();
 const am: ActionsManager = new ActionsManager();
 let exit: boolean = false;
+let shutdownAttempts: number = 0;
 
 // Set up commander
 program.version('1.0.0').description('A simple CLI application.');
@@ -34,7 +37,21 @@ process.on('uncaughtException', (err) => {
 });
 
 process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+process.on('SIGINT', () => {
+	var listeners = process.listeners('SIGINT');
+	for (var i = 0; i < listeners.length; i++) {
+		console.log(listeners[i].toString());
+	}
+
+	++shutdownAttempts;
+
+	if (shutdownAttempts >= 2) {
+		console.log(chalk['red'].underline('Proccess failed to shutdown peacefully.'));
+		process.exit(0);
+	} else {
+		shutdown();
+	}
+});
 
 // Run the program
 console.clear();
@@ -168,17 +185,19 @@ async function handleCommand(action: string) {
 }
 
 async function shutdown() {
+	++shutdownAttempts;
 	exit = true;
 
 	EMITTER.emit(INTERNAL_EVENTS.SHUTDOWN);
-
-	await sleep(1000);
 	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
+
+	await sleep(3000);
+	process.exit(0);
 }
 
 function printMainMenu() {
 	console.log(
-		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See command below.`
+		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See command below. (${process.pid})`
 	);
 	console.log(`-  Q exit the program.`);
 	console.log(`-  H see a list of commands.`);
@@ -223,6 +242,15 @@ function setupHandlers() {
 			});
 			console.error(error);
 		}
+
+		try {
+			setupTiktokService();
+		} catch (error) {
+			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				data: { message: 'Error occured trying to setup tiktok service...' }
+			});
+			console.error(error);
+		}
 	}
 }
 
@@ -234,6 +262,16 @@ function setupTikfinityService() {
 
 		tikfinityHandler.setActionManager(am);
 		tikfinityHandler.start();
+	}
+}
+
+function setupTiktokService() {
+	const config: ConnectionConfig = cm.getConfig('tiktok');
+
+	if (config?.enabled) {
+		const tiktokHandler: TikTokHandler = new TikTokHandler(config);
+		cm.addInstance(config.id, tiktokHandler);
+		tiktokHandler.start();
 	}
 }
 

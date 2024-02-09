@@ -8,6 +8,10 @@ export interface WebSocketInfo {
 	url: string;
 }
 
+export interface TikTokInfo {
+	username: string;
+}
+
 export class ConnectionConfig {
 	constructor(
 		public id: string,
@@ -15,7 +19,7 @@ export class ConnectionConfig {
 		public name: string,
 		public description: string,
 		public type: string,
-		public info: WebHookInfo | WebSocketInfo
+		public info: WebHookInfo | WebSocketInfo | TikTokInfo
 	) {}
 
 	static fromJson(json: string): ConnectionConfig {

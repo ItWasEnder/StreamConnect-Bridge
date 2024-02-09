@@ -1,9 +1,9 @@
 {
 	"compilerOptions": {
-        // "baseUrl": "./",
-        // "paths": {
-        //     "@connections/*": ["src/connections/*"]
-        // },
+		// "baseUrl": "./",
+		// "paths": {
+		//     "@connections/*": ["src/connections/*"]
+		// },
 		"target": "es6",
 		"module": "es2020",
 		"outDir": "./dist",

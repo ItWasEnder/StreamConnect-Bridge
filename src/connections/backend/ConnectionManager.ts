@@ -11,26 +11,33 @@ export class ConnectionManager {
 	constructor() {
 		this.configs = new Map();
 		this.managedInstances = new Map();
+
+		// Setup emitters
+		EMITTER.on(INTERNAL_EVENTS.SHUTDOWN, () => {
+			for (const instance of this.getInstances()) {
+				instance.stop();
+			}
+		});
 	}
 
 	loadConfigs(): void {
 		// try {
-			const filePath = path.join(process.cwd(), 'storage', 'modules.json');
-			const rawData = fs.readFileSync(filePath, 'utf-8');
-			const config = JSON.parse(rawData);
+		const filePath = path.join(process.cwd(), 'storage', 'modules.json');
+		const rawData = fs.readFileSync(filePath, 'utf-8');
+		const config = JSON.parse(rawData);
 
-			// for each module in the file
-			for (const module of config) {
-				const connection = new ConnectionConfig(
-					module.id,
-					module.enabled,
-					module.name,
-					module.description,
-					module.type,
-					module.connection
-				);
-				this.addConfig(connection.id, connection);
-			}
+		// for each module in the file
+		for (const module of config) {
+			const connection = new ConnectionConfig(
+				module.id,
+				module.enabled,
+				module.name,
+				module.description,
+				module.type,
+				module.connection
+			);
+			this.addConfig(connection.id, connection);
+		}
 		// } catch (error) {
 		// 	throw error;
 		// }

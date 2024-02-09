@@ -20,5 +20,15 @@
 		"connection": {
 			"url": "ws://127.0.0.1:42069/websocket"
 		}
+	},
+	{
+		"id": "tiktok",
+		"enabled": true,
+		"name": "TikTok - Websocket",
+		"description": "This will connect to tiktok session chat and allow triggers to integrate with StreamConnect",
+		"type": "custom",
+		"connection": {
+			"username": "austinfelt"
+		}
 	}
 ]

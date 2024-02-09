@@ -14,7 +14,7 @@ export abstract class WebServerInst extends Server {
 		this.app = express();
 		this.app.use(bodyParser.json());
 		this.app.use(cors());
-		
+
 		this.port = port;
 		this.service = service;
 

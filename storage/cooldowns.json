@@ -1,9 +1,9 @@
 {
-    "actions": [
-        {
-            "categoryId": "tits-activate-trigger",
-            "actionId": "70500522-be3b-4c15-a020-37dfcae7e28f",
-            "cooldown": "5000"
-        }
-    ]
+	"actions": [
+		{
+			"categoryId": "tits-activate-trigger",
+			"actionId": "70500522-be3b-4c15-a020-37dfcae7e28f",
+			"cooldown": "5000"
+		}
+	]
 }

@@ -7,6 +7,7 @@
 	"scripts": {
 		"build": "tsc",
 		"start": "npm run build && node dist/index.js",
+		"start:prod": "node dist/index.js",
 		"format": "prettier --write .",
 		"lint": "eslint . --ext .ts"
 	},
@@ -28,6 +29,7 @@
 		"cors": "^2.8.5",
 		"express": "^4.18.2",
 		"inquirer": "^9.2.14",
+		"tiktok-live-connector": "^1.1.2",
 		"ws": "^8.16.0"
 	}
 }

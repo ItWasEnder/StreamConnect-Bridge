@@ -11,11 +11,6 @@ export abstract class Server {
 
 	constructor(service: string) {
 		this.service = service;
-		
-		// Setup emitters
-		EMITTER.on(INTERNAL_EVENTS.SHUTDOWN, () => {
-			this.stop();
-		});
 	}
 
 	abstract start(): void;
