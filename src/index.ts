@@ -2,7 +2,7 @@ import inquirer from 'inquirer';
 import * as commander from 'commander';
 import * as Text from './utils/Text.js';
 import { ConnectionManager } from './connections/backend/ConnectionManager.js';
-import { Action, ActionsManager } from './actions/ActionsManager.js';
+import { ActionData, ActionsManager } from './actions/ActionsManager.js';
 import { EMITTER, INTERNAL_EVENTS } from './events/EventsHandler.js';
 import { ConnectionConfig } from './connections/backend/Connection.js';
 import { STATUS, Server } from './connections/backend/Server.js';
@@ -203,7 +203,7 @@ function loadConfigs() {
 function setupHandlers() {
 	if (cm.getConfigs().length === 0) {
 		EMITTER.emit(INTERNAL_EVENTS.WARN, {
-			data: { message: 'No configurations found. Please create \"storage/modules.json\"' }
+			data: { message: 'No configurations found. Please create "storage/modules.json"' }
 		});
 	} else {
 		try {
@@ -246,7 +246,7 @@ function setupTitsService() {
 		titsHandler.setCallback(RESPONSE_TYPES.TRIGGER_LIST, (message: TITSMessage) => {
 			const data = message.data;
 			am.consumeActions(TITS_ACTIONS.ACTIVATE_TRIGGER, () => {
-				const actions: Action[] = [];
+				const actions: ActionData[] = [];
 				// Construct actions
 				for (const trigger of data.triggers) {
 					const id = trigger['ID'];
@@ -265,7 +265,7 @@ function setupTitsService() {
 		titsHandler.setCallback(RESPONSE_TYPES.ITEM_LIST, (message: TITSMessage) => {
 			const data = message.data;
 			am.consumeActions(TITS_ACTIONS.THROW_ITEMS, () => {
-				const actions: Action[] = [];
+				const actions: ActionData[] = [];
 				// Construct actions
 				for (const item of data.items) {
 					const id = item['ID'];

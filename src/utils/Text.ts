@@ -6,6 +6,7 @@ export const COLORS = {
 	GREEN: 'green',
 	BLUE: 'blue',
 	YELLOW: 'yellow',
+	MAGENTA: 'magenta',
 	GRAY: 'gray'
 };
 

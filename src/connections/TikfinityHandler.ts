@@ -1,15 +1,17 @@
 import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
 import { WebServerInst } from './backend/WebServerInst.js';
 import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { Action, ActionPayload, ActionsManager } from '../actions/ActionsManager.js';
+import { ActionsManager, CALLERS, TriggerRequest } from '../actions/ActionsManager.js';
 import * as Text from '../utils/Text.js';
 
-export interface TikfinityExecuteRequest extends ActionPayload {
-	categoryId: string;
+interface Action {
 	actionId: string;
-	context: {
-		[key: string]: any;
-	};
+	actionName: string;
+}
+
+interface Category {
+	categoryId: string;
+	categoryName: string;
 }
 
 export class TikfinityWebServerHandler extends WebServerInst {
@@ -18,7 +20,6 @@ export class TikfinityWebServerHandler extends WebServerInst {
 
 	constructor(config: ConnectionConfig) {
 		super(config.name, (config.info as WebHookInfo).port);
-
 		this.config = config;
 	}
 
@@ -38,24 +39,27 @@ export class TikfinityWebServerHandler extends WebServerInst {
 		});
 
 		this.register('GET', '/api/features/categories', (req, res) => {
-			const catMap: { categoryId: string; categoryName: string }[] = [];
+			const categories: Category[] = [];
 
 			// compile the categories in a format that tikfinity can understand
-			this.actionManager.getKeys().forEach((key) => {
-				catMap.push({ categoryId: key, categoryName: Text.replaceAndCapitalize(key) });
+			this.actionManager.getCategories().forEach((key) => {
+				categories.push({ categoryId: key, categoryName: Text.replaceAndCapitalize(key) });
 			});
 
 			res.json({
-				data: catMap
+				data: categories
 			});
 		});
 
 		this.register('GET', '/api/features/actions', (req, res) => {
 			const categoryId: string = req.query.categoryId as string;
-			const actions: Set<Action> = this.actionManager.getActions(categoryId);
+			const actions: Action[] = this.actionManager
+				.getActionMap(categoryId)
+				.getActions()
+				.map((action) => action as Action);
 
 			res.json({
-				data: Array.from(actions)
+				data: actions
 			});
 		});
 
@@ -70,10 +74,12 @@ export class TikfinityWebServerHandler extends WebServerInst {
 				return;
 			}
 
-			const request: TikfinityExecuteRequest = {
-				type: 'tikfinity',
-				...req.body
-			};
+			const request: TriggerRequest = {
+				caller: CALLERS.TIKFINITY,
+				categoryId: body.categoryId,
+				actionId: body.actionId,
+				context: body.context
+			} as TriggerRequest;
 
 			EMITTER.emit(INTERNAL_EVENTS.ACTION, { data: request });
 

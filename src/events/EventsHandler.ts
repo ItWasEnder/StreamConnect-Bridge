@@ -10,6 +10,7 @@ export const INTERNAL_EVENTS = {
 	WARN: 'warn',
 	GOOD: 'good',
 	INFO: 'info',
+	NOTIF: 'notification',
 	NEW_FOLLOWER: 'new-follower',
 	NEW_SUB: 'new-like',
 	ACTION: 'action'
@@ -33,4 +34,9 @@ EMITTER.on(INTERNAL_EVENTS.GOOD, (good) => {
 EMITTER.on(INTERNAL_EVENTS.INFO, (info) => {
 	const { message } = info.data;
 	console.log(`\n${Text.coloredPill(Text.COLORS.BLUE)} ${message}`);
+});
+
+EMITTER.on(INTERNAL_EVENTS.NOTIF, (info) => {
+	const { message } = info.data;
+	console.log(`\n${Text.coloredPill(Text.COLORS.MAGENTA)} ${message}`);
 });
