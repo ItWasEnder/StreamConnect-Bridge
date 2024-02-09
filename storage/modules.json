@@ -23,12 +23,12 @@
 	},
 	{
 		"id": "tiktok",
-		"enabled": true,
+		"enabled": false,
 		"name": "TikTok - Websocket",
 		"description": "This will connect to tiktok session chat and allow triggers to integrate with StreamConnect",
 		"type": "custom",
 		"connection": {
-			"username": "austinfelt"
+			"username": "itwasender"
 		}
 	}
 ]

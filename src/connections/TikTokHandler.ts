@@ -142,7 +142,6 @@ export class TikTokHandler extends Server {
 		});
 
 		this.connection.on('streamEnd', (data) => {
-			console.log('Live ended', data);
 			this.reconnectEnabled = false;
 		});
 
@@ -180,8 +179,7 @@ export class TikTokHandler extends Server {
 
 				// Check if connection needs to be dropped
 				if (this.clientDisconnected) {
-					console.log('Exiting service...');
-					this.connection.disconnect();
+					this.stop();
 					return;
 				}
 
@@ -199,6 +197,11 @@ export class TikTokHandler extends Server {
 				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
 					data: { message: `Service ${this.service} - ${msg}` }
 				});
+
+				if (msg.match(/LIVE has ended/gi)) {
+					this.stop();
+					return;
+				}
 
 				if (this.reconnectEnabled) {
 					// Schedule the next reconnect attempt
