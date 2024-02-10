@@ -1,19 +1,21 @@
-import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { Emitting } from '../../events/backend/Emmiting.js';
 import { ConnectionConfig } from './Connection.js';
 import { Server } from './Server.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export class ConnectionManager {
+export class ConnectionManager extends Emitting {
 	private configs: Map<string, ConnectionConfig>;
 	private managedInstances: Map<string, Server>;
 
 	constructor() {
+		super();
 		this.configs = new Map();
 		this.managedInstances = new Map();
 
 		// Setup emitters
-		EMITTER.on(INTERNAL_EVENTS.SHUTDOWN, () => {
+		this.on(INTERNAL_EVENTS.SHUTDOWN, () => {
 			for (const instance of this.getInstances()) {
 				instance.stop();
 			}

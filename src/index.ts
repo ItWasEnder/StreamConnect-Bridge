@@ -17,9 +17,11 @@ import {
 import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
 import { TikTokHandler } from './connections/TikTokHandler.js';
 import chalk from 'chalk';
+import { TriggersManager } from './triggers/TriggersManager.js';
 
 const cm: ConnectionManager = new ConnectionManager();
 const am: ActionsManager = new ActionsManager();
+const tm: TriggersManager = new TriggersManager();
 let exit: boolean = false;
 let shutdownAttempts: number = 0;
 
@@ -38,11 +40,6 @@ process.on('uncaughtException', (err) => {
 
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', () => {
-	var listeners = process.listeners('SIGINT');
-	for (var i = 0; i < listeners.length; i++) {
-		console.log(listeners[i].toString());
-	}
-
 	++shutdownAttempts;
 
 	if (shutdownAttempts >= 2) {
@@ -57,6 +54,7 @@ process.on('SIGINT', () => {
 console.clear();
 
 loadConfigs();
+loadTriggers();
 setupHandlers();
 
 // Wait for inits
@@ -214,6 +212,19 @@ function loadConfigs() {
 	} catch (error) {
 		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
 			data: { message: 'Error occured trying to load connections...' }
+		});
+		console.error(error);
+	}
+}
+
+function loadTriggers() {
+	try {
+		// Load triggers
+		tm.loadTriggers();
+		EMITTER.emit(INTERNAL_EVENTS.GOOD, { data: { message: 'Triggers loaded...' } });
+	} catch (error) {
+		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			data: { message: 'Error occured trying to load triggers...' }
 		});
 		console.error(error);
 	}

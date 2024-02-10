@@ -1,5 +1,6 @@
 import { TITS_ACTIONS } from '../connections/TITSHandler.js';
-import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { Emitting } from '../events/backend/Emmiting.js';
 import { Payload } from '../events/backend/Emitter.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -70,17 +71,18 @@ export class ActionMap {
 	}
 }
 
-export class ActionsManager {
+export class ActionsManager extends Emitting {
 	private categoryMap: Map<string, ActionMap>; // map<categoryId, map<actionId, info>>
 	private reverseMap: Map<string, string>; // map<actionId, categoryId>
 
 	constructor() {
+		super();
 		// init maps
 		this.categoryMap = new Map();
 		this.reverseMap = new Map();
 
 		// setup event listeners
-		EMITTER.on(INTERNAL_EVENTS.ACTION, this.handleTriggerRequest.bind(this));
+		this.on(INTERNAL_EVENTS.ACTION, this.handleTriggerRequest.bind(this));
 	}
 
 	/**
@@ -120,7 +122,7 @@ export class ActionsManager {
 			actionMap.put(action);
 
 			if (this.reverseMap.has(action.actionId)) {
-				EMITTER.emit(INTERNAL_EVENTS.WARN, {
+				this.emit(INTERNAL_EVENTS.WARN, {
 					data: {
 						message: `ActionManager >> ActionId '${action.actionId}/${action.actionName}' already exists in another category`
 					}
@@ -168,7 +170,7 @@ export class ActionsManager {
 				action.cooldown = cooldown;
 			}
 		} catch (error) {
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
 					message: `ActionManager >> Error occured trying to load cooldowns from file @@@ ${error}`
 				}
@@ -190,7 +192,7 @@ export class ActionsManager {
 		} = payload.data as TriggerRequest;
 
 		if (!categoryId || !actionId) {
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: { message: 'ActionManager >> Missing categoryId or actionId from action event' }
 			});
 			return;
@@ -200,7 +202,7 @@ export class ActionsManager {
 		const actionData: ActionData | undefined = actionMap.get(actionId);
 
 		if (!actionData) {
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
 					message: `ActionManager >> Invalid actionId from action event: ${categoryId}/${actionId}`
 				}
@@ -216,7 +218,7 @@ export class ActionsManager {
 			const timeLeft: number = actionData.cooldown - elapsed;
 
 			if (elapsed < actionData.cooldown) {
-				EMITTER.emit(INTERNAL_EVENTS.NOTIF, {
+				this.emit(INTERNAL_EVENTS.NOTIF, {
 					data: {
 						message: `Action '${actionData.actionName}' cancelled by cooldown (${timeLeft}ms)`
 					}
@@ -232,7 +234,7 @@ export class ActionsManager {
 			case CALLERS.TIKFINITY:
 				const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
 
-				EMITTER.emit(INTERNAL_EVENTS.INFO, {
+				this.emit(INTERNAL_EVENTS.INFO, {
 					data: {
 						message: `Action '${actionData.actionName}' triggered by ${context?.username} ${coinInfo}`
 					}
@@ -251,10 +253,10 @@ export class ActionsManager {
 						};
 					}
 				}
-				EMITTER.emit(categoryId, { data: payload });
+				this.emit(categoryId, { data: payload });
 				break;
 			default:
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				this.emit(INTERNAL_EVENTS.ERROR, {
 					data: { message: `ActionManager >> Unhandled caller: ${caller}` }
 				});
 				return;
