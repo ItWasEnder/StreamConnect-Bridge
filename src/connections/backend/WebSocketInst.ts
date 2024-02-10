@@ -1,5 +1,5 @@
 import WebSocket, { RawData } from 'ws';
-import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import { STATUS, Server } from './Server.js';
 import { sleep } from '../../utils/Random.js';
 
@@ -24,11 +24,11 @@ export abstract class WebSocketInst extends Server {
 		this.socket.send(data, callback);
 	}
 
-	on(event: string, handler: (data: any) => void) {
+	addListener(event: string, handler: (data: any) => void) {
 		this.socket.on(event, handler);
 	}
 
-	off(event: string, handler: (data: any) => void) {
+	removeListener(event: string, handler: (data: any) => void) {
 		this.socket.off(event, handler);
 	}
 
@@ -46,7 +46,7 @@ export abstract class WebSocketInst extends Server {
 
 	async start() {
 		if ((await this.status()) === STATUS.ONLINE) {
-			EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			this.emit(INTERNAL_EVENTS.WARN, {
 				data: { message: `Service ${this.service} already started...` }
 			});
 			return;
@@ -55,7 +55,7 @@ export abstract class WebSocketInst extends Server {
 		this.socket = new WebSocket(this.url);
 
 		this.socket.on('open', () => {
-			EMITTER.emit(INTERNAL_EVENTS.GOOD, {
+			this.emit(INTERNAL_EVENTS.GOOD, {
 				data: { message: `Service ${this.service} is connected to ${this.url}` }
 			});
 
@@ -72,7 +72,7 @@ export abstract class WebSocketInst extends Server {
 				return;
 			}
 
-			EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			this.emit(INTERNAL_EVENTS.WARN, {
 				data: { message: `Service ${this.service} has disconnected from ${this.url}` }
 			});
 
@@ -89,7 +89,7 @@ export abstract class WebSocketInst extends Server {
 				return;
 			}
 
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: { message: `Service ${this.service} encountered an error: ${error.message}` }
 			});
 		};

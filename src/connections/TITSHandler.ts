@@ -1,6 +1,6 @@
 import { ConnectionConfig, WebSocketInfo } from './backend/Connection.js';
 import { WebSocketInst } from './backend/WebSocketInst.js';
-import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { RawData } from 'ws';
 import crypto from 'crypto';
 
@@ -44,7 +44,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 		this.config = config;
 
 		// Setup emmiters
-		EMITTER.on(TITS_ACTIONS.THROW_ITEMS, (payload) => {
+		this.on(TITS_ACTIONS.THROW_ITEMS, (payload) => {
 			const { data } = payload;
 
 			if (data?.items) {
@@ -53,7 +53,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 
 				this.handleThrowRequest(data.items, count, delay);
 			} else {
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				this.emit(INTERNAL_EVENTS.ERROR, {
 					data: {
 						message: `TITSSocketHandler >> Trigger activate request made without 'triggerId' field.`
 					}
@@ -61,13 +61,13 @@ export class TITSWebSocketHandler extends WebSocketInst {
 			}
 		});
 
-		EMITTER.on(TITS_ACTIONS.ACTIVATE_TRIGGER, (payload) => {
+		this.on(TITS_ACTIONS.ACTIVATE_TRIGGER, (payload) => {
 			const { data } = payload;
 
 			if (data?.triggerId) {
 				this.handleTriggerRequest(data.triggerId);
 			} else {
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				this.emit(INTERNAL_EVENTS.ERROR, {
 					data: {
 						message: `TITSSocketHandler >> Trigger activate request made without 'triggerId' field.`
 					}
@@ -80,7 +80,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 		Object.values(RESPONSE_TYPES).map((type) => this.setCallback(type, _empty));
 
 		this.setCallback(RESPONSE_TYPES.ERROR, (message: TITSMessage) => {
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
 					message: `TITSSocketHandler >> An error occured when attempting to call socket api.`
 				}
@@ -170,7 +170,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 			return;
 		}
 
-		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+		this.emit(INTERNAL_EVENTS.ERROR, {
 			data: { message: `An error occured when attempting to call ${func}` }
 		});
 		console.error(error);
@@ -184,7 +184,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 			if (handler) {
 				this.messageHandlers.get(response.messageType)(response);
 			} else {
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				this.emit(INTERNAL_EVENTS.ERROR, {
 					data: {
 						message: `TITSSocketHandler >> No handler found for message type: ${response.messageType}`
 					}

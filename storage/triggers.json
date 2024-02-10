@@ -1,0 +1,57 @@
+[
+	{
+		"id": "455e6b47-4e5e-41ff-a86c-a4e12fba10fc",
+		"name": "Throw Cat Command",
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"data_path": "data.comment",
+				"conditions": [
+					{
+						"order": 0,
+						"negate": false,
+						"operation": "equals",
+						"value": "!throwcat"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": 0,
+				"event": "tits-throw-items",
+				"context": {
+					"items": ["46e7af46-f7e6-4a33-b91b-5649864e3bf5"],
+					"count": 3
+				}
+			}
+		]
+	},
+	{
+		"id": "6cc3b6a3-f8f0-4238-b155-1b34f39c08ef",
+		"name": "Throw Planets On Galaxy",
+		"events": [
+			{
+				"event": "tiktok-gift",
+				"data_path": "data.giftName",
+				"conditions": [
+					{
+						"order": 0,
+						"negate": false,
+						"operation": "contains",
+						"value": "galaxy"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": 0,
+				"event": "tits-activate-trigger",
+				"context": {
+					"triggerId": "2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"
+				}
+			}
+		]
+	}
+]

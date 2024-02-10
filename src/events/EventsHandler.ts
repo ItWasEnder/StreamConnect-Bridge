@@ -11,8 +11,6 @@ export const INTERNAL_EVENTS = {
 	GOOD: 'good',
 	INFO: 'info',
 	NOTIF: 'notification',
-	NEW_FOLLOWER: 'new-follower',
-	NEW_SUB: 'new-like',
 	ACTION: 'action'
 };
 

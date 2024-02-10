@@ -1,7 +1,7 @@
 import { WebcastPushConnection } from 'tiktok-live-connector';
 import { ConnectionConfig, TikTokInfo } from './backend/Connection.js';
 import { STATUS, Server } from './backend/Server.js';
-import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 
 export const TIKTOK_EVENTS = {
 	FOLLOW: 'tiktok-follow',
@@ -75,7 +75,7 @@ export class TikTokHandler extends Server {
 			const event: TiktokEvent = this.parseData(TIKTOK_EVENTS.CHAT, data);
 			event.data = { comment: data.comment } as TiktokChat;
 
-			EMITTER.emit(TIKTOK_EVENTS.CHAT, { data: event });
+			this.emit(TIKTOK_EVENTS.CHAT, { data: event });
 		});
 
 		this.connection.on('gift', (data) => {
@@ -90,7 +90,7 @@ export class TikTokHandler extends Server {
 
 			if (data.giftType != 1 || data.repeatEnd) {
 				// Streak ended
-				EMITTER.emit(TIKTOK_EVENTS.GIFT, { data: event });
+				this.emit(TIKTOK_EVENTS.GIFT, { data: event });
 			} else {
 				// Streak in progress
 				// console.log(`${data.uniqueId} is sending gift ${data.giftName} x${data.repeatCount}`);
@@ -116,14 +116,14 @@ export class TikTokHandler extends Server {
 				subscribingStatus: data.subscribingStatus
 			} as TiktokSubscribe;
 
-			EMITTER.emit(TIKTOK_EVENTS.SUBSCRIBE, { data: event });
+			this.emit(TIKTOK_EVENTS.SUBSCRIBE, { data: event });
 		});
 
 		// Triggers when a user follows
 		this.connection.on('follow', (data) => {
 			const event: TiktokEvent = this.parseData(TIKTOK_EVENTS.FOLLOW, data);
 
-			EMITTER.emit(TIKTOK_EVENTS.FOLLOW, { data: event });
+			this.emit(TIKTOK_EVENTS.FOLLOW, { data: event });
 		});
 
 		// Triggers when a user shares the stream
@@ -138,7 +138,7 @@ export class TikTokHandler extends Server {
 				timestamp: Number.parseInt(data.createTime)
 			};
 
-			EMITTER.emit(TIKTOK_EVENTS.SHARE, { data: event });
+			this.emit(TIKTOK_EVENTS.SHARE, { data: event });
 		});
 
 		this.connection.on('streamEnd', (data) => {
@@ -150,7 +150,7 @@ export class TikTokHandler extends Server {
 				return;
 			}
 
-			EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			this.emit(INTERNAL_EVENTS.WARN, {
 				data: { message: `Service ${this.service} disconnected, scheduling reconnect...` }
 			});
 			this.sceduleReconnect();
@@ -159,7 +159,7 @@ export class TikTokHandler extends Server {
 
 	async start(): Promise<void> {
 		if ((await this.status()) === STATUS.ONLINE) {
-			EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			this.emit(INTERNAL_EVENTS.WARN, {
 				data: { message: `Service ${this.service} already started...` }
 			});
 			return;
@@ -184,7 +184,7 @@ export class TikTokHandler extends Server {
 				}
 
 				if (!isReconnect) {
-					EMITTER.emit(INTERNAL_EVENTS.GOOD, {
+					this.emit(INTERNAL_EVENTS.GOOD, {
 						data: {
 							message: `Service ${this.service} connected to live for '${(this.config.info as TikTokInfo).username}' (webSocket=${upgradedToWebsocket})`
 						}
@@ -194,7 +194,7 @@ export class TikTokHandler extends Server {
 			.catch((err) => {
 				const msg: string = `${isReconnect ? 'Reconnect' : 'Connection'} failed @@@ ${err.message}`;
 
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				this.emit(INTERNAL_EVENTS.ERROR, {
 					data: { message: `Service ${this.service} - ${msg}` }
 				});
 
@@ -238,7 +238,7 @@ export class TikTokHandler extends Server {
 		}
 
 		if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
 					message: `Service ${this.config.name} - Max attempts exceeded. Stopping service...`
 				}

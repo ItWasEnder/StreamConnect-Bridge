@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import { STATUS, Server } from './Server.js';
-import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import bodyParser from 'body-parser';
 
 export abstract class WebServerInst extends Server {
@@ -69,14 +69,14 @@ export abstract class WebServerInst extends Server {
 
 	async start() {
 		if ((await this.status()) === STATUS.ONLINE) {
-			EMITTER.emit(INTERNAL_EVENTS.WARN, {
+			this.emit(INTERNAL_EVENTS.WARN, {
 				data: { message: `Service ${this.service} already started...` }
 			});
 			return;
 		}
 
 		this.server = this.app.listen(this.port, () => {
-			EMITTER.emit(INTERNAL_EVENTS.GOOD, {
+			this.emit(INTERNAL_EVENTS.GOOD, {
 				data: { message: `Service ${this.service} is hosted on http://localhost:${this.port}` }
 			});
 		});

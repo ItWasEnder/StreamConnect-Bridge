@@ -1,6 +1,6 @@
 import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
 import { WebServerInst } from './backend/WebServerInst.js';
-import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { ActionsManager, CALLERS, TriggerRequest } from '../actions/ActionsManager.js';
 import * as Text from '../utils/Text.js';
 
@@ -74,14 +74,10 @@ export class TikfinityWebServerHandler extends WebServerInst {
 				return;
 			}
 
-			const request: TriggerRequest = {
-				caller: CALLERS.TIKFINITY,
-				categoryId: body.categoryId,
-				actionId: body.actionId,
-				context: body.context
-			} as TriggerRequest;
+			const request: TriggerRequest = req.body as TriggerRequest;
+			request.caller = CALLERS.TIKFINITY;
 
-			EMITTER.emit(INTERNAL_EVENTS.ACTION, { data: request });
+			this.emit(INTERNAL_EVENTS.ACTION, { data: request });
 
 			res.json({
 				data: []

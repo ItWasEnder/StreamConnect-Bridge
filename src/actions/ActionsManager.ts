@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export enum CALLERS {
+	INTENAL,
 	TIKFINITY
 }
 
@@ -19,6 +20,7 @@ export interface TriggerRequest {
 	caller: CALLERS;
 	categoryId: string;
 	actionId: string;
+	bypass_cooldown?: boolean;
 	context: Record<string, any>;
 }
 
@@ -179,7 +181,13 @@ export class ActionsManager {
 	 * @param payload the event payload
 	 */
 	private handleTriggerRequest(payload: Payload) {
-		const { caller, categoryId, actionId, context } = payload.data as TriggerRequest;
+		const {
+			caller,
+			categoryId,
+			actionId,
+			context,
+			bypass_cooldown = false
+		} = payload.data as TriggerRequest;
 
 		if (!categoryId || !actionId) {
 			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
@@ -201,7 +209,7 @@ export class ActionsManager {
 		}
 
 		// Handle cooldown
-		if (actionData.cooldown > 0) {
+		if (!bypass_cooldown && actionData.cooldown > 0) {
 			const lastTriggered: number = actionData.lastTriggered ?? 0;
 			const now: number = Date.now();
 			const elapsed: number = now - lastTriggered;

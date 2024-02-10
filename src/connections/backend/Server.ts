@@ -1,4 +1,4 @@
-import { EMITTER, INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { Emitting } from '../../events/backend/Emmiting.js';
 
 export enum STATUS {
 	ONLINE,
@@ -6,10 +6,11 @@ export enum STATUS {
 	UNAVAILABLE
 }
 
-export abstract class Server {
+export abstract class Server extends Emitting {
 	public service: string;
 
 	constructor(service: string) {
+		super();
 		this.service = service;
 	}
 
