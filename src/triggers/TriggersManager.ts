@@ -1,9 +1,10 @@
 import { randomUUID } from 'crypto';
-import { TriggerRequest } from '../actions/ActionsManager.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { Emitting } from '../events/backend/Emmiting.js';
+import { JSONPath } from 'jsonpath-plus';
 import * as fs from 'fs';
 import * as path from 'path';
+import { Payload } from '../events/backend/Emitter.js';
 
 export enum OperationType {
 	EQUALS = 'equals',
@@ -16,7 +17,7 @@ export interface Condition {
 	order: number;
 	negate: boolean;
 	operation: OperationType;
-	value: string;
+	value: string | number;
 }
 
 export interface EventMapping {
@@ -25,13 +26,20 @@ export interface EventMapping {
 	conditions: Condition[];
 }
 
+export interface EventRequest {
+	caller: 'internal';
+	event: string;
+	payload: Record<string, any>;
+}
+
 export class Trigger {
 	id: string;
 	name: string;
+	cooldown: number;
 	events: EventMapping[];
-	actions: TriggerRequest[];
+	actions: EventRequest[];
 
-	constructor(name: string, events: EventMapping[], actions: TriggerRequest[]) {
+	constructor(name: string, events: EventMapping[], actions: EventRequest[]) {
 		this.id = randomUUID();
 		this.name = name;
 		this.events = events;
@@ -49,6 +57,7 @@ export class Trigger {
 
 // TODO parse data_path w/ https://www.npmjs.com/package/jsonpath-plus
 export class TriggersManager extends Emitting {
+	private eventIndex: Map<string, Trigger[]> = new Map();
 	private triggers: Map<string, Trigger> = new Map();
 
 	/**
@@ -61,11 +70,11 @@ export class TriggersManager extends Emitting {
 
 	/**
 	 * This method removes a trigger from the triggers list
-	 * @param trigger the trigger to remove
+	 * @param id the id of the trigger to remove
 	 * @returns true if the trigger was removed, false otherwise
 	 */
-	removeTrigger(trigger: Trigger): boolean {
-		return this.triggers.delete(trigger.id);
+	removeTrigger(id: string): boolean {
+		return this.triggers.delete(id);
 	}
 
 	/**
@@ -85,6 +94,13 @@ export class TriggersManager extends Emitting {
 			for (const _trigger of triggers) {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
 				this.addTrigger(trigger);
+
+				// Add the trigger to the event index
+				for (const event of trigger.events) {
+					console.log(`Adding trigger for event ${event.event}`);
+
+					this.getEventTriggers(event.event).push(trigger);
+				}
 			}
 		} catch (error) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
@@ -93,5 +109,115 @@ export class TriggersManager extends Emitting {
 				}
 			});
 		}
+	}
+
+	/**
+	 * This will return a mutable array of triggers for the given event
+	 * @param eventName the event name to get triggers for
+	 * @returns an array of triggers for the given event
+	 */
+	private getEventTriggers(eventName: string): Trigger[] {
+		let triggers: Trigger[] = this.eventIndex.get(eventName);
+
+		// If new event, create a new array for it & setup listener
+		if (!triggers) {
+			this.on(eventName, (data) => {
+				this.handleEvent(eventName, data);
+			});
+			triggers = this.eventIndex.set(eventName, []).get(eventName)!;
+		}
+
+		return triggers;
+	}
+
+	private handleEvent(eventName: string, payload: Payload): void {
+		const triggers = this.getEventTriggers(eventName);
+		const eventData = payload.data;
+
+		for (const trigger of triggers) {
+			// Check if the trigger's conditions are met
+			const _results = JSONPath({
+				path: `$.[?(@.event=="${eventName}")]`,
+				json: trigger.events
+			});
+
+			// Failed to find matching event in trigger @@@ technically an error but doesn't matter
+			if (!_results || _results.length === 0) {
+				console.log(`Failed to find matching event in trigger ${trigger.name}`);
+				return;
+			}
+
+			const triggerEvent: EventMapping = _results[0];
+			const conditionsMet = triggerEvent.conditions.every((condition) => {
+				return this.evalCondition(triggerEvent.data_path, eventData, condition);
+			});
+
+			// If the conditions are met, emit the actions
+			if (conditionsMet) {
+				for (const request of trigger.actions) {
+					// Emit the action request
+					this.emit(request.event, { data: request.payload });
+				}
+			}
+		}
+	}
+
+	private evalCondition(data_path: string, data: any, condition: Condition): boolean {
+		const exact_data = JSONPath({
+			path: `$.${data_path}`,
+			json: data
+		});
+
+		if (!exact_data || exact_data.length === 0) {
+			return false;
+		}
+
+		const dataValue = exact_data[0];
+
+		let result = false;
+
+		switch (condition.operation) {
+			case OperationType.EQUALS:
+				result = dataValue === condition.value;
+				break;
+			case OperationType.CONTAINS:
+				if (typeof dataValue !== 'string') {
+					throw new Error(
+						`Cannot use operation 'contains' on data at path ${data_path}. Data is not a string.`
+					);
+				}
+
+				const stringValue = condition.value as string;
+				result = result = dataValue.includes(stringValue);
+				break;
+			case OperationType.GREATER_THAN:
+				if (typeof dataValue !== 'number') {
+					throw new Error(
+						`Cannot use operation 'greater_than' on data at path ${data_path}. Data is not a number.`
+					);
+				}
+
+				const numericValue = condition.value as number;
+				result = dataValue > numericValue;
+				break;
+			case OperationType.LESS_THAN:
+				if (typeof dataValue !== 'number') {
+					throw new Error(
+						`Cannot use operation 'less_than' on data at path ${data_path}. Data is not a number.`
+					);
+				}
+
+				const numericValueLess = condition.value as number;
+				result = dataValue < numericValueLess;
+				break;
+			default:
+				throw new Error(`Unknown operation type ${condition.operation}`);
+		}
+
+		if (condition.negate) {
+			result = !result;
+		}
+
+		return result;
 	}
 }

@@ -15,10 +15,17 @@ import {
 	TITS_ACTIONS
 } from './connections/TITSHandler.js';
 import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
-import { TikTokHandler } from './connections/TikTokHandler.js';
+import {
+	FOLLOW_STATUS,
+	TIKTOK_EVENTS,
+	TikTokHandler,
+	TiktokChat,
+	TiktokEvent
+} from './connections/TikTokHandler.js';
 import chalk from 'chalk';
 import { TriggersManager } from './triggers/TriggersManager.js';
 
+const commandHistory: Map<string, string> = new Map();
 const cm: ConnectionManager = new ConnectionManager();
 const am: ActionsManager = new ActionsManager();
 const tm: TriggersManager = new TriggersManager();
@@ -89,17 +96,39 @@ async function handleCommand(action: string) {
 		case 'c':
 			console.clear();
 			break;
-		case 't':
-			const { uuid } = await inquirer.prompt([
+		case 'tc':
+			const { chat } = await inquirer.prompt([
 				{
 					type: 'input',
-					name: 'uuid',
-					message: 'Enter a UUID:'
+					name: 'chat',
+					message: 'Enter a chat-message:'
 				}
 			]);
 
-			EMITTER.emit(TITS_ACTIONS.ACTIVATE_TRIGGER, {
-				data: { triggerId: uuid }
+			let _chat: string = chat as string;
+
+			if (_chat.includes('`')) {
+				_chat = commandHistory.get('tc') || 'undefined';
+			} else {
+				commandHistory.set('tc', _chat);
+			}
+
+			console.log(`\n${Text.coloredPill(Text.COLORS.BLUE)} Sending TikTok chat message event...`);
+			const event: TiktokEvent = {
+				event: 'chat',
+				username: 'test',
+				userId: 'test123',
+				followRole: FOLLOW_STATUS.FOLLOWER,
+				isSubscriber: false,
+				isModerator: false,
+				timestamp: Date.now(),
+				data: {
+					comment: _chat
+				} as TiktokChat
+			} as TiktokEvent;
+
+			EMITTER.emit(TIKTOK_EVENTS.CHAT, {
+				data: event
 			});
 
 			break;

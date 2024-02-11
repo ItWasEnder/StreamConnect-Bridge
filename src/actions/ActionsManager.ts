@@ -17,7 +17,7 @@ export interface ActionData {
 	cooldown?: number;
 }
 
-export interface TriggerRequest {
+export interface ActionRequest {
 	caller: CALLERS;
 	categoryId: string;
 	actionId: string;
@@ -189,7 +189,7 @@ export class ActionsManager extends Emitting {
 			actionId,
 			context,
 			bypass_cooldown = false
-		} = payload.data as TriggerRequest;
+		} = payload.data as ActionRequest;
 
 		if (!categoryId || !actionId) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
@@ -231,6 +231,9 @@ export class ActionsManager extends Emitting {
 		actionData.lastTriggered = Date.now();
 
 		switch (caller) {
+			case CALLERS.INTENAL:
+				this.emit(categoryId, { data: context });
+				break;
 			case CALLERS.TIKFINITY:
 				const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
 

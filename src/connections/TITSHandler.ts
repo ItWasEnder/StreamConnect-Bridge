@@ -132,15 +132,15 @@ export class TITSWebSocketHandler extends WebSocketInst {
 		);
 	}
 
-	handleThrowRequest(items: string[], count?: number, delay?: number) {
+	handleThrowRequest(items: string[], count: number = 1, delay: number = 0.08) {
 		this.send(
 			{
 				apiName: 'TITSPublicApi',
 				apiVersion: '1.0',
 				requestID: crypto.randomUUID(),
 				messageType: REQUEST_TYPES.THROW_ITEMS,
-				delayTime: delay || 0.08,
-				amountOfThrows: count || 1,
+				delayTime: delay,
+				amountOfThrows: count,
 				errorOnMissingID: false,
 				data: {
 					items: items

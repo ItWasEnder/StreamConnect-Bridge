@@ -2,6 +2,7 @@
 	{
 		"id": "455e6b47-4e5e-41ff-a86c-a4e12fba10fc",
 		"name": "Throw Cat Command",
+		"cooldown": 0,
 		"events": [
 			{
 				"event": "tiktok-chat",
@@ -20,9 +21,37 @@
 			{
 				"caller": 0,
 				"event": "tits-throw-items",
-				"context": {
+				"payload": {
 					"items": ["46e7af46-f7e6-4a33-b91b-5649864e3bf5"],
-					"count": 3
+					"count": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "3b17da1b-47f0-458c-a74e-ffd566946807",
+		"name": "Throw Pan Command",
+		"cooldown": 0,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"data_path": "data.comment",
+				"conditions": [
+					{
+						"order": 0,
+						"negate": false,
+						"operation": "equals",
+						"value": "!throwpan"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": 0,
+				"event": "tits-activate-trigger",
+				"payload": {
+					"triggerId": "191c8a9f-1054-4aff-8743-9d110af2ff17"
 				}
 			}
 		]
@@ -30,6 +59,7 @@
 	{
 		"id": "6cc3b6a3-f8f0-4238-b155-1b34f39c08ef",
 		"name": "Throw Planets On Galaxy",
+		"cooldown": 0,
 		"events": [
 			{
 				"event": "tiktok-gift",
@@ -48,7 +78,7 @@
 			{
 				"caller": 0,
 				"event": "tits-activate-trigger",
-				"context": {
+				"payload": {
 					"triggerId": "2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"
 				}
 			}
