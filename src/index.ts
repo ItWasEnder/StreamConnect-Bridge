@@ -59,9 +59,9 @@ process.on('SIGINT', () => {
 
 // Run the program
 console.clear();
-
 loadConfigs();
-loadTriggers();
+
+// Setup handlers
 setupHandlers();
 
 // Wait for inits
@@ -107,15 +107,15 @@ async function handleCommand(action: string) {
 
 			let _chat: string = chat as string;
 
-			if (_chat.includes('`')) {
+			if (_chat === '`') {
 				_chat = commandHistory.get('tc') || 'undefined';
 			} else {
 				commandHistory.set('tc', _chat);
 			}
 
-			console.log(`\n${Text.coloredPill(Text.COLORS.BLUE)} Sending TikTok chat message event...`);
+			console.log(`${Text.coloredPill(Text.COLORS.MAGENTA)} Sending TikTok chat message event...`);
 			const event: TiktokEvent = {
-				event: 'chat',
+				event: TIKTOK_EVENTS.CHAT,
 				username: 'test',
 				userId: 'test123',
 				followRole: FOLLOW_STATUS.FOLLOWER,
@@ -241,19 +241,6 @@ function loadConfigs() {
 	} catch (error) {
 		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
 			data: { message: 'Error occured trying to load connections...' }
-		});
-		console.error(error);
-	}
-}
-
-function loadTriggers() {
-	try {
-		// Load triggers
-		tm.loadTriggers();
-		EMITTER.emit(INTERNAL_EVENTS.GOOD, { data: { message: 'Triggers loaded...' } });
-	} catch (error) {
-		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: 'Error occured trying to load triggers...' }
 		});
 		console.error(error);
 	}

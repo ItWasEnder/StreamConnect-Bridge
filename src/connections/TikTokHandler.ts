@@ -2,6 +2,7 @@ import { WebcastPushConnection } from 'tiktok-live-connector';
 import { ConnectionConfig, TikTokInfo } from './backend/Connection.js';
 import { STATUS, Server } from './backend/Server.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { BaseEvent } from '../triggers/TriggersManager.js';
 
 export const TIKTOK_EVENTS = {
 	FOLLOW: 'tiktok-follow',
@@ -18,14 +19,12 @@ export enum FOLLOW_STATUS {
 	FRIENDS
 }
 
-export interface TiktokEvent {
-	event: string;
-	username: string;
+export interface TiktokEvent extends BaseEvent {
+	nickname: string;
 	userId: string;
 	followRole: FOLLOW_STATUS;
 	isSubscriber: boolean;
 	isModerator: boolean;
-	timestamp: number;
 	data?: TiktokGift | TiktokChat | TiktokSubscribe;
 }
 
@@ -64,7 +63,8 @@ export class TikTokHandler extends Server {
 
 		this.connection = new WebcastPushConnection((this.config.info as TikTokInfo).username, {
 			fetchRoomInfoOnConnect: true, // only connect to live sessions
-			requestPollingIntervalMs: 2000, // poll every second
+			enableWebsocketUpgrade: true, // use websocket, if available
+			requestPollingIntervalMs: 1000, // poll every second
 			clientParams: {
 				app_language: 'en-US',
 				device_platform: 'web'
@@ -128,15 +128,7 @@ export class TikTokHandler extends Server {
 
 		// Triggers when a user shares the stream
 		this.connection.on('share', (data) => {
-			const event: TiktokEvent = {
-				event: TIKTOK_EVENTS.SHARE,
-				username: data.uniqueId,
-				userId: data.userId,
-				followRole: FOLLOW_STATUS[data.followRole as keyof typeof FOLLOW_STATUS],
-				isSubscriber: data.isSubscriber,
-				isModerator: data.isModerator,
-				timestamp: Number.parseInt(data.createTime)
-			};
+			const event: TiktokEvent = this.parseData(TIKTOK_EVENTS.SHARE, data);
 
 			this.emit(TIKTOK_EVENTS.SHARE, { data: event });
 		});
@@ -187,6 +179,12 @@ export class TikTokHandler extends Server {
 					this.emit(INTERNAL_EVENTS.GOOD, {
 						data: {
 							message: `Service ${this.service} connected to live for '${(this.config.info as TikTokInfo).username}' (webSocket=${upgradedToWebsocket})`
+						}
+					});
+				} else {
+					this.emit(INTERNAL_EVENTS.GOOD, {
+						data: {
+							message: `Service ${this.service} reconnected to live for '${(this.config.info as TikTokInfo).username}'`
 						}
 					});
 				}
@@ -264,6 +262,7 @@ export class TikTokHandler extends Server {
 	private parseData(event: string, data: any): TiktokEvent {
 		return {
 			event: event,
+			nickname: data.nickname,
 			username: data.uniqueId,
 			userId: data.userId,
 			followRole: FOLLOW_STATUS[data.followRole as keyof typeof FOLLOW_STATUS],

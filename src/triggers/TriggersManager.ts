@@ -2,9 +2,9 @@ import { randomUUID } from 'crypto';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { Emitting } from '../events/backend/Emmiting.js';
 import { JSONPath } from 'jsonpath-plus';
+import { Payload } from '../events/backend/Emitter.js';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Payload } from '../events/backend/Emitter.js';
 
 export enum OperationType {
 	EQUALS = 'equals',
@@ -15,6 +15,7 @@ export enum OperationType {
 
 export interface Condition {
 	order: number;
+	data_path: string;
 	negate: boolean;
 	operation: OperationType;
 	value: string | number;
@@ -22,7 +23,6 @@ export interface Condition {
 
 export interface EventMapping {
 	event: string;
-	data_path: string;
 	conditions: Condition[];
 }
 
@@ -32,26 +32,33 @@ export interface EventRequest {
 	payload: Record<string, any>;
 }
 
-export class Trigger {
-	id: string;
-	name: string;
-	cooldown: number;
-	events: EventMapping[];
-	actions: EventRequest[];
+export interface BaseEvent {
+	event: string;
+	username: string;
+	timestamp: number;
+}
 
-	constructor(name: string, events: EventMapping[], actions: EventRequest[]) {
+export class Trigger {
+	lastExecuted: number = 0;
+	id: string;
+
+	constructor(
+		public name: string,
+		public events: EventMapping[],
+		public actions: EventRequest[],
+		public cooldown: number = 0,
+		public log: boolean = true,
+		public enabled: boolean = true
+	) {
 		this.id = randomUUID();
-		this.name = name;
-		this.events = events;
-		this.actions = actions;
 	}
 
 	static fromObject(object: any): Trigger {
-		const { name, events, actions } = object;
+		const { name, events, actions, cooldown = 0, log = true, enabled = true } = object;
 		if (!name || !events || !actions) {
 			throw new Error('Invalid trigger object. Missing required properties.');
 		}
-		return new Trigger(name, events, actions);
+		return new Trigger(name, events, actions, cooldown, log, enabled);
 	}
 }
 
@@ -59,6 +66,15 @@ export class Trigger {
 export class TriggersManager extends Emitting {
 	private eventIndex: Map<string, Trigger[]> = new Map();
 	private triggers: Map<string, Trigger> = new Map();
+	private fileWatcherTimeout: NodeJS.Timeout | null = null;
+
+	constructor() {
+		super();
+		const filePath = path.join(process.cwd(), 'storage', 'triggers.json');
+
+		this.loadTriggers(filePath);
+		this.watchTriggersFile(filePath);
+	}
 
 	/**
 	 * This method adds a trigger to the triggers list
@@ -85,9 +101,43 @@ export class TriggersManager extends Emitting {
 		return Array.from(this.triggers.values());
 	}
 
-	loadTriggers() {
+	/**
+	 * This method clears out the trigger mappings and event index for the manager (this.loadTriggers() after)
+	 */
+	clearAll(): void {
+		this.triggers.clear();
+
+		// Clear the event index
+		for (const [event, _] of this.eventIndex) {
+			this.eventIndex.set(event, []);
+		}
+	}
+
+	watchTriggersFile(filePath: string) {
+		fs.watch(filePath, (eventType, filename) => {
+			if (eventType === 'change') {
+				// Clear the existing timeout
+				if (this.fileWatcherTimeout) {
+					clearTimeout(this.fileWatcherTimeout);
+				}
+
+				// Set a new timeout
+				this.fileWatcherTimeout = setTimeout(() => {
+					this.emit(INTERNAL_EVENTS.NOTIF, {
+						data: {
+							message: `File change detected! Reloading triggers from file >> '${filename}'`
+						}
+					});
+
+					this.clearAll();
+					this.loadTriggers(filePath);
+				}, 100); // 100ms delay
+			}
+		});
+	}
+
+	loadTriggers(filePath: string) {
 		try {
-			const filePath = path.join(process.cwd(), 'storage', 'triggers.json');
 			const rawData = fs.readFileSync(filePath, 'utf-8');
 			const triggers = JSON.parse(rawData);
 
@@ -95,17 +145,17 @@ export class TriggersManager extends Emitting {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
 				this.addTrigger(trigger);
 
-				// Add the trigger to the event index
-				for (const event of trigger.events) {
-					console.log(`Adding trigger for event ${event.event}`);
-
-					this.getEventTriggers(event.event).push(trigger);
+				if (trigger.enabled) {
+					// Add the trigger to the event index
+					for (const event of trigger.events) {
+						this.getEventTriggers(event.event).push(trigger);
+					}
 				}
 			}
 		} catch (error) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
-					message: `ActionManager >> Error occured trying to load cooldowns from file @@@ ${error}`
+					message: `TriggerManager >> Error occured trying to load triggers from file @@@ ${error}`
 				}
 			});
 		}
@@ -148,23 +198,40 @@ export class TriggersManager extends Emitting {
 			}
 
 			const triggerEvent: EventMapping = _results[0];
-			const conditionsMet = triggerEvent.conditions.every((condition) => {
-				return this.evalCondition(triggerEvent.data_path, eventData, condition);
+			const conditionsMet = triggerEvent.conditions.every((c) => {
+				return this.evalCondition(eventData, c);
 			});
+
+			// check if the trigger is on cooldown
+			if (trigger.cooldown > 0 && Date.now() - trigger.lastExecuted < trigger.cooldown) {
+				continue;
+			}
 
 			// If the conditions are met, emit the actions
 			if (conditionsMet) {
 				for (const request of trigger.actions) {
+					const _baseEvent: BaseEvent = eventData;
+					const nickname = eventData.nickname;
+
+					trigger.lastExecuted = Date.now();
+
 					// Emit the action request
+					if (trigger.log) {
+						this.emit(INTERNAL_EVENTS.INFO, {
+							data: {
+								message: `Trigger '${trigger.name}' executed by @${_baseEvent.username}${nickname ? `(${nickname})` : ''} from '${_baseEvent.event}' event`
+							}
+						});
+					}
 					this.emit(request.event, { data: request.payload });
 				}
 			}
 		}
 	}
 
-	private evalCondition(data_path: string, data: any, condition: Condition): boolean {
+	private evalCondition(data: any, con: Condition): boolean {
 		const exact_data = JSONPath({
-			path: `$.${data_path}`,
+			path: `$.${con.data_path}`,
 			json: data
 		});
 
@@ -176,45 +243,45 @@ export class TriggersManager extends Emitting {
 
 		let result = false;
 
-		switch (condition.operation) {
+		switch (con.operation) {
 			case OperationType.EQUALS:
-				result = dataValue === condition.value;
+				result = dataValue === con.value;
 				break;
 			case OperationType.CONTAINS:
 				if (typeof dataValue !== 'string') {
 					throw new Error(
-						`Cannot use operation 'contains' on data at path ${data_path}. Data is not a string.`
+						`Cannot use operation 'contains' on data at path ${con.data_path}. Data is not a string.`
 					);
 				}
 
-				const stringValue = condition.value as string;
+				const stringValue = con.value as string;
 				result = result = dataValue.includes(stringValue);
 				break;
 			case OperationType.GREATER_THAN:
 				if (typeof dataValue !== 'number') {
 					throw new Error(
-						`Cannot use operation 'greater_than' on data at path ${data_path}. Data is not a number.`
+						`Cannot use operation 'greater_than' on data at path ${con.data_path}. Data is not a number.`
 					);
 				}
 
-				const numericValue = condition.value as number;
+				const numericValue = con.value as number;
 				result = dataValue > numericValue;
 				break;
 			case OperationType.LESS_THAN:
 				if (typeof dataValue !== 'number') {
 					throw new Error(
-						`Cannot use operation 'less_than' on data at path ${data_path}. Data is not a number.`
+						`Cannot use operation 'less_than' on data at path ${con.data_path}. Data is not a number.`
 					);
 				}
 
-				const numericValueLess = condition.value as number;
+				const numericValueLess = con.value as number;
 				result = dataValue < numericValueLess;
 				break;
 			default:
-				throw new Error(`Unknown operation type ${condition.operation}`);
+				throw new Error(`Unknown operation type ${con.operation}`);
 		}
 
-		if (condition.negate) {
+		if (con.negate) {
 			result = !result;
 		}
 

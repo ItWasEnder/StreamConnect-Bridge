@@ -3,13 +3,15 @@
 		"id": "455e6b47-4e5e-41ff-a86c-a4e12fba10fc",
 		"name": "Throw Cat Command",
 		"cooldown": 0,
+		"log": false,
+		"enabled": true,
 		"events": [
 			{
 				"event": "tiktok-chat",
-				"data_path": "data.comment",
 				"conditions": [
 					{
 						"order": 0,
+						"data_path": "data.comment",
 						"negate": false,
 						"operation": "equals",
 						"value": "!throwcat"
@@ -32,14 +34,16 @@
 		"id": "3b17da1b-47f0-458c-a74e-ffd566946807",
 		"name": "Throw Pan Command",
 		"cooldown": 0,
+		"log": false,
+		"enabled": true,
 		"events": [
 			{
 				"event": "tiktok-chat",
-				"data_path": "data.comment",
 				"conditions": [
 					{
 						"order": 0,
 						"negate": false,
+						"data_path": "data.comment",
 						"operation": "equals",
 						"value": "!throwpan"
 					}
@@ -60,16 +64,18 @@
 		"id": "6cc3b6a3-f8f0-4238-b155-1b34f39c08ef",
 		"name": "Throw Planets On Galaxy",
 		"cooldown": 0,
+		"log": true,
+		"enabled": true,
 		"events": [
 			{
 				"event": "tiktok-gift",
-				"data_path": "data.giftName",
 				"conditions": [
 					{
 						"order": 0,
+						"data_path": "data.giftName",
 						"negate": false,
 						"operation": "contains",
-						"value": "galaxy"
+						"value": "Galaxy"
 					}
 				]
 			}
@@ -80,6 +86,28 @@
 				"event": "tits-activate-trigger",
 				"payload": {
 					"triggerId": "2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"
+				}
+			}
+		]
+	},
+	{
+		"id": "38309cdf-a4fe-4986-b22e-fdfb824d0765",
+		"name": "Throw Follow Heart",
+		"cooldown": 0,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-follow",
+				"conditions": []
+			}
+		],
+		"actions": [
+			{
+				"caller": 0,
+				"event": "tits-activate-trigger",
+				"payload": {
+					"triggerId": "ea89cce2-1c8a-4b4f-8ad2-fcd286f3f27d"
 				}
 			}
 		]
