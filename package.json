@@ -7,7 +7,7 @@
 	"scripts": {
 		"build": "tsc",
 		"package": "tsup --env.NODE_ENV production && npm run grab-proto",
-		"grab-proto": "mkdir proto 2>nul || curl -o proto/tiktokSchema.proto https://raw.githubusercontent.com/EnderGamingFilms/TikTok-Live-Connector/main/src/proto/tiktokSchema.proto",
+		"grab-proto": "touch proto/tiktokSchema.proto && curl -o proto/tiktokSchema.proto https://raw.githubusercontent.com/EnderGamingFilms/TikTok-Live-Connector/main/src/proto/tiktokSchema.proto",
 		"start": "npm run build && node dist/index.js",
 		"start:prod": "node dist/index.js",
 		"format": "prettier --write .",
