@@ -6,6 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc",
+		"package": "tsup --env.NODE_ENV production && npm run grab-proto",
+		"grab-proto": "mkdir proto 2>nul || curl -o proto/tiktokSchema.proto https://raw.githubusercontent.com/EnderGamingFilms/TikTok-Live-Connector/main/src/proto/tiktokSchema.proto",
 		"start": "npm run build && node dist/index.js",
 		"start:prod": "node dist/index.js",
 		"format": "prettier --write .",
@@ -20,6 +22,7 @@
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-prettier": "^5.1.3",
 		"prettier": "^3.2.5",
+		"tsup": "^8.0.2",
 		"typescript": "^5.3.3"
 	},
 	"dependencies": {
