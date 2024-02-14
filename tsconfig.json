@@ -10,6 +10,7 @@
 		"rootDir": "./src",
 		"strict": false,
 		"moduleResolution": "node",
+		"sourceMap": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true

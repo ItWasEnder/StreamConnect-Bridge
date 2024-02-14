@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 
-export const PILL = '●';
+export const PILL = '•';
 export const COLORS = {
 	RED: 'red',
 	GREEN: 'green',
