@@ -7,7 +7,7 @@ export abstract class Emitting {
 	 * @param event the event to emit
 	 * @param data the payload to emit
 	 */
-	emit(event: string, data: Payload): void {
+	protected emit(event: string, data: Payload): void {
 		EMITTER.emit(event, data);
 	}
 
@@ -16,7 +16,7 @@ export abstract class Emitting {
 	 * @param event the event to listen for
 	 * @param handler the handler to execute
 	 */
-	on(event: string, handler: (data: any) => void) {
+	protected on(event: string, handler: (data: any) => void) {
 		EMITTER.on(event, handler);
 	}
 }

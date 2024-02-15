@@ -4,7 +4,7 @@ import { STATUS, Server } from './Server.js';
 import { sleep } from '../../utils/Random.js';
 
 export abstract class WebSocketInst extends Server {
-	private socket: WebSocket;
+	protected socket: WebSocket;
 	private url: any;
 	private attempts: number;
 	private connected: boolean;
@@ -17,20 +17,22 @@ export abstract class WebSocketInst extends Server {
 		this.attempts = 0;
 	}
 
-	abstract onReady(): void;
-
-	send(payload: object, callback: (err?: Error) => void) {
+	protected send(payload: object, callback: (err?: Error) => void) {
 		const data: string = JSON.stringify(payload);
 		this.socket.send(data, callback);
 	}
 
-	addListener(event: string, handler: (data: any) => void) {
+	protected addListener(event: string, handler: (data: any) => void) {
 		this.socket.on(event, handler);
 	}
 
-	removeListener(event: string, handler: (data: any) => void) {
+	protected removeListener(event: string, handler: (data: any) => void) {
 		this.socket.off(event, handler);
 	}
+
+	protected abstract onReady(): void;
+
+	protected abstract onMessage(event: { rawData: RawData; isBinary: boolean }): void;
 
 	async status(): Promise<STATUS> {
 		if (this.socket && this.socket.isPaused) {
@@ -41,8 +43,6 @@ export abstract class WebSocketInst extends Server {
 			return STATUS.OFFLINE;
 		}
 	}
-
-	abstract onMessage(event: { rawData: RawData; isBinary: boolean }): void;
 
 	async start() {
 		if ((await this.status()) === STATUS.ONLINE) {

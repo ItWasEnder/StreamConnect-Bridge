@@ -14,6 +14,7 @@ export default defineConfig({
 		'inquirer',
 		'jsonpath-plus',
 		'tiktok-live-connector',
-		'ws'
+		'ws',
+		'chokidar'
 	]
 });

@@ -175,7 +175,7 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
+				"caller": "internal",
 				"event": "tits-activate-trigger",
 				"payload": {
 					"triggerId": "2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"
@@ -197,7 +197,7 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
+				"caller": "internal",
 				"event": "tits-activate-trigger",
 				"payload": {
 					"triggerId": "ea89cce2-1c8a-4b4f-8ad2-fcd286f3f27d"

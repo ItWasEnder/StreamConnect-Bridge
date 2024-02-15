@@ -2,33 +2,44 @@ import inquirer from 'inquirer';
 import * as commander from 'commander';
 import * as Text from './utils/Text.js';
 import { ConnectionManager } from './connections/backend/ConnectionManager.js';
-import { ActionData, ActionsManager } from './actions/ActionsManager.js';
-import { EMITTER, INTERNAL_EVENTS } from './events/EventsHandler.js';
+import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler.js';
 import { ConnectionConfig } from './connections/backend/Connection.js';
 import { STATUS, Server } from './connections/backend/Server.js';
 import { sleep } from './utils/Random.js';
-const { program } = commander;
+import chalk from 'chalk';
+import { TriggerManager } from './triggers/TriggerManager.js';
+import { FileManager } from './utils/FileManager.js';
 import {
-	TITSWebSocketHandler,
-	RESPONSE_TYPES,
-	TITSMessage,
-	TITS_ACTIONS
-} from './connections/TITSHandler.js';
-import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
+	TikfinityWebServerHandler,
+	TikTokHandler,
+	TITSWebSocketHandler
+} from './connections/index.js';
 import {
 	FOLLOW_STATUS,
 	TIKTOK_EVENTS,
-	TikTokHandler,
 	TiktokChat,
 	TiktokEvent
 } from './connections/TikTokHandler.js';
-import chalk from 'chalk';
-import { TriggersManager } from './triggers/TriggersManager.js';
 
-const commandHistory: Map<string, string> = new Map();
-const cm: ConnectionManager = new ConnectionManager();
-const am: ActionsManager = new ActionsManager();
-const tm: TriggersManager = new TriggersManager();
+// Load userData folder for file storage
+const args = process.argv.slice(2); // Slice the first two elements
+let rootDir: string = '';
+let backend: boolean = false; // if cli should be enabled
+
+for (let i = 0; i < args.length; i++) {
+	if (args[i] === '--data') {
+		rootDir = args[i + 1];
+	} else if (args[i] === '--backend') {
+		backend = true;
+	}
+}
+
+const CMD_HIST: Map<string, string> = new Map();
+const CONNECTION_MANAGER: ConnectionManager = new ConnectionManager();
+const FILE_MANAGER: FileManager = new FileManager(rootDir);
+const TRIGGER_MANAGER: TriggerManager = new TriggerManager(FILE_MANAGER);
+const { program } = commander;
+
 let exit: boolean = false;
 let shutdownAttempts: number = 0;
 
@@ -66,8 +77,14 @@ setupHandlers();
 
 // Wait for inits
 printMainMenu();
+setupFileWatcher();
 
-runInterface();
+// CLI
+if (!backend) {
+	runInterface();
+} else {
+	disableNewLine();
+}
 
 // Function to run the program
 function runInterface() {
@@ -108,9 +125,9 @@ async function handleCommand(action: string) {
 			let _chat: string = chat as string;
 
 			if (_chat === '`') {
-				_chat = commandHistory.get('tc') || 'undefined';
+				_chat = CMD_HIST.get('tc') || 'undefined';
 			} else {
-				commandHistory.set('tc', _chat);
+				CMD_HIST.set('tc', _chat);
 			}
 
 			console.log(`${Text.coloredPill(Text.COLORS.MAGENTA)} Sending TikTok chat message event...`);
@@ -136,10 +153,10 @@ async function handleCommand(action: string) {
 			const mStack: string[] = [];
 			mStack.push(`\n${Text.coloredPill(Text.COLORS.BLUE)} Current Module Status:`);
 
-			const serverConfigs = cm.getConfigs();
+			const serverConfigs = CONNECTION_MANAGER.getConfigs();
 
 			for (const config of serverConfigs) {
-				const server: Server | null = cm.getInstance(config.id);
+				const server: Server | null = CONNECTION_MANAGER.getInstance(config.id);
 				let statusBubble: string;
 
 				if (!server) {
@@ -168,7 +185,7 @@ async function handleCommand(action: string) {
 		case 'r':
 			const choices: any[] = [{ name: 'Restart all services', value: 'all' }];
 
-			cm.getConfigs().forEach((config) => {
+			CONNECTION_MANAGER.getConfigs().forEach((config) => {
 				choices.push({ name: config.name, value: config.id });
 			});
 
@@ -183,14 +200,14 @@ async function handleCommand(action: string) {
 
 			if (service === 'all') {
 				console.log(`\n${Text.coloredPill(Text.COLORS.BLUE)} Restarting all services...`);
-				cm.getInstances().forEach((instance) => {
+				CONNECTION_MANAGER.getInstances().forEach((instance) => {
 					instance.start();
 				});
 			} else {
 				console.log(
 					`\n${Text.coloredPill(Text.COLORS.BLUE)} Attempting to restart ${service} service...`
 				);
-				const instance = cm.getInstance(service);
+				const instance = CONNECTION_MANAGER.getInstance(service);
 				if (instance) {
 					instance.start();
 				} else {
@@ -236,7 +253,7 @@ function printMainMenu() {
 function loadConfigs() {
 	try {
 		// Load connection configs
-		cm.loadConfigs();
+		CONNECTION_MANAGER.loadConfigs();
 		EMITTER.emit(INTERNAL_EVENTS.GOOD, { data: { message: 'Configurations loaded...' } });
 	} catch (error) {
 		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
@@ -247,7 +264,7 @@ function loadConfigs() {
 }
 
 function setupHandlers() {
-	if (cm.getConfigs().length === 0) {
+	if (CONNECTION_MANAGER.getConfigs().length === 0) {
 		EMITTER.emit(INTERNAL_EVENTS.WARN, {
 			data: { message: 'No configurations found. Please create "storage/modules.json"' }
 		});
@@ -282,70 +299,48 @@ function setupHandlers() {
 }
 
 function setupTikfinityService() {
-	const config: ConnectionConfig = cm.getConfig('tikfinity');
+	const config: ConnectionConfig = CONNECTION_MANAGER.getConfig('tikfinity');
 	if (config?.enabled) {
-		const tikfinityHandler: TikfinityWebServerHandler = new TikfinityWebServerHandler(config);
-		cm.addInstance(config.id, tikfinityHandler);
+		const tikfinityHandler: TikfinityWebServerHandler = new TikfinityWebServerHandler(
+			config,
+			TRIGGER_MANAGER
+		);
 
-		tikfinityHandler.setActionManager(am);
+		CONNECTION_MANAGER.addInstance(config.id, tikfinityHandler);
+
 		tikfinityHandler.start();
 	}
 }
 
 function setupTiktokService() {
-	const config: ConnectionConfig = cm.getConfig('tiktok');
+	const config: ConnectionConfig = CONNECTION_MANAGER.getConfig('tiktok');
 
 	if (config?.enabled) {
 		const tiktokHandler: TikTokHandler = new TikTokHandler(config);
-		cm.addInstance(config.id, tiktokHandler);
+		CONNECTION_MANAGER.addInstance(config.id, tiktokHandler);
 		tiktokHandler.start();
 	}
 }
 
 function setupTitsService() {
-	const config: ConnectionConfig = cm.getConfig('tits');
+	const config: ConnectionConfig = CONNECTION_MANAGER.getConfig('tits');
 	if (config?.enabled) {
 		const titsHandler: TITSWebSocketHandler = new TITSWebSocketHandler(config);
-		cm.addInstance(config.id, titsHandler);
 
-		titsHandler.setCallback(RESPONSE_TYPES.TRIGGER_LIST, (message: TITSMessage) => {
-			const data = message.data;
-			am.consumeActions(TITS_ACTIONS.ACTIVATE_TRIGGER, () => {
-				const actions: ActionData[] = [];
-				// Construct actions
-				for (const trigger of data.triggers) {
-					const id = trigger['ID'];
-					const name = trigger['name'];
-
-					actions.push({
-						actionId: id,
-						actionName: name
-					});
-				}
-
-				return actions;
-			});
-		});
-
-		titsHandler.setCallback(RESPONSE_TYPES.ITEM_LIST, (message: TITSMessage) => {
-			const data = message.data;
-			am.consumeActions(TITS_ACTIONS.THROW_ITEMS, () => {
-				const actions: ActionData[] = [];
-				// Construct actions
-				for (const item of data.items) {
-					const id = item['ID'];
-					const name = item['name'];
-
-					actions.push({
-						actionId: id,
-						actionName: name
-					});
-				}
-
-				return actions;
-			});
-		});
+		// Register this service
+		CONNECTION_MANAGER.addInstance(config.id, titsHandler);
+		TRIGGER_MANAGER.registerProvider(titsHandler.provider);
 
 		titsHandler.start();
 	}
+}
+
+function setupFileWatcher() {
+	FILE_MANAGER.onChange('storage/modules.json', (_p) => {
+		// TODO: Handle reloading modules
+	});
+
+	FILE_MANAGER.onChange('storage/modules.json', (_p) => {
+		// TODO: Handle reloading modules
+	});
 }

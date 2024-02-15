@@ -2,7 +2,7 @@ import { WebcastPushConnection } from 'tiktok-live-connector';
 import { ConnectionConfig, TikTokInfo } from './backend/Connection.js';
 import { STATUS, Server } from './backend/Server.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { BaseEvent } from '../triggers/TriggersManager.js';
+import { BaseEvent } from '../triggers/TriggerManager.js';
 
 export const TIKTOK_EVENTS = {
 	FOLLOW: 'tiktok-follow',

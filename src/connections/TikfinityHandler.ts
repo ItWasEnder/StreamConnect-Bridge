@@ -1,8 +1,9 @@
 import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
 import { WebServerInst } from './backend/WebServerInst.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { ActionsManager, CALLERS, ActionRequest } from '../actions/ActionsManager.js';
 import * as Text from '../utils/Text.js';
+import { TriggerManager } from '../triggers/TriggerManager.js';
+import { ActionRequest, CALLERS } from '../triggers/backend/ActionRequest.js';
 
 interface Action {
 	actionId: string;
@@ -15,16 +16,11 @@ interface Category {
 }
 
 export class TikfinityWebServerHandler extends WebServerInst {
-	private config: ConnectionConfig;
-	private actionManager: ActionsManager;
-
-	constructor(config: ConnectionConfig) {
+	constructor(
+		private config: ConnectionConfig,
+		private triggerManager: TriggerManager
+	) {
 		super(config.name, (config.info as WebHookInfo).port);
-		this.config = config;
-	}
-
-	setActionManager(am: ActionsManager) {
-		this.actionManager = am;
 	}
 
 	setupRoutes() {
@@ -39,13 +35,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 		});
 
 		this.register('GET', '/api/features/categories', (req, res) => {
-			const categories: Category[] = [];
-
-			// compile the categories in a format that tikfinity can understand
-			this.actionManager.getCategories().forEach((key) => {
-				categories.push({ categoryId: key, categoryName: Text.replaceAndCapitalize(key) });
-			});
-
+			const categories: Category[] = this.getCategories();
 			res.json({
 				data: categories
 			});
@@ -53,14 +43,17 @@ export class TikfinityWebServerHandler extends WebServerInst {
 
 		this.register('GET', '/api/features/actions', (req, res) => {
 			const categoryId: string = req.query.categoryId as string;
-			const actions: Action[] = this.actionManager
-				.getActionMap(categoryId)
-				.getActions()
-				.map((action) => action as Action);
-
-			res.json({
-				data: actions
-			});
+			try {
+				const actions: Action[] = this.getActions(categoryId);
+				res.json({
+					data: actions
+				});
+			} catch (err) {
+				res.status(400);
+				res.json({
+					message: err.message
+				});
+			}
 		});
 
 		this.register('POST', '/api/features/actions/exec', (req, res) => {
@@ -77,11 +70,54 @@ export class TikfinityWebServerHandler extends WebServerInst {
 			const request: ActionRequest = req.body as ActionRequest;
 			request.caller = CALLERS.TIKFINITY;
 
-			this.emit(INTERNAL_EVENTS.ACTION, { data: request });
+			this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
 
 			res.json({
 				data: []
 			});
 		});
+	}
+
+	private getCategories(): Category[] {
+		const categories: Category[] = [];
+
+		for (const provider of this.triggerManager.getProviders()) {
+			for (const category of provider.getCategories()) {
+				categories.push({
+					categoryId: category,
+					categoryName: Text.replaceAndCapitalize(category)
+				} as Category);
+			}
+		}
+
+		return categories;
+	}
+
+	private getActions(categoryId: string): Action[] {
+		const provider = this.triggerManager.lookupProvider(categoryId);
+		const actions: Action[] = [];
+
+		if (!provider) {
+			throw new Error(
+				`TikfinityWebServerHandler >> getActions >> No provider found for categoryId: ${categoryId}`
+			);
+		}
+
+		if (!provider.has(categoryId)) {
+			throw new Error(
+				`TikfinityWebServerHandler >> getActions >> No category found for categoryId: ${categoryId}`
+			);
+		}
+
+		const actionMap = provider.getActionMap(categoryId);
+
+		for (const action of actionMap.getActions()) {
+			actions.push({
+				actionId: action.id,
+				actionName: action.name
+			});
+		}
+
+		return actions;
 	}
 }
