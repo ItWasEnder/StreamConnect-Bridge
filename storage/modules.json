@@ -7,8 +7,8 @@
 		"type": "webserver",
 		"connection": {
 			"host": "localhost",
-			"apiKey": "",
-			"port": 8832
+			"port": 8832,
+			"apiKey": ""
 		}
 	},
 	{
@@ -29,6 +29,17 @@
 		"type": "custom",
 		"connection": {
 			"username": "itwasender"
+		}
+	},
+	{
+		"id": "vts-pog",
+		"enabled": true,
+		"name": "VTS-POG - Service",
+		"description": "This handles the local requests in order to make TTS happen",
+		"connection": {
+			"host": "localhost",
+			"port": 3800,
+			"apiKey": ""
 		}
 	}
 ]

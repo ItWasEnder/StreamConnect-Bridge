@@ -10,17 +10,16 @@ import chalk from 'chalk';
 import { TriggerManager } from './triggers/TriggerManager.js';
 import { FileManager } from './utils/FileManager.js';
 import {
-	TikfinityWebServerHandler,
-	TikTokHandler,
-	TITSWebSocketHandler
-} from './connections/index.js';
-import {
 	FOLLOW_STATUS,
 	TIKTOK_EVENTS,
+	TikTokHandler,
 	TiktokChat,
 	TiktokEvent
 } from './connections/TikTokHandler.js';
 import { ProviderManager } from './providers/ProviderManager.js';
+import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
+import { TITSWebSocketHandler } from './connections/TITSHandler.js';
+import { POGHandler } from './connections/POGHandler.js';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -298,6 +297,15 @@ function setupHandlers() {
 			});
 			console.error(error);
 		}
+
+		try {
+			setupPOGService();
+		} catch (error) {
+			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+				data: { message: 'Error occured trying to setup VTS-POG service...' }
+			});
+			console.error(error);
+		}
 	}
 }
 
@@ -322,6 +330,14 @@ function setupTiktokService() {
 		const tiktokHandler: TikTokHandler = new TikTokHandler(config);
 		CONNECTION_MANAGER.addInstance(config.id, tiktokHandler);
 		tiktokHandler.start();
+	}
+}
+
+function setupPOGService() {
+	const config: ConnectionConfig = CONNECTION_MANAGER.getConfig('vts-pog');
+	if (config?.enabled) {
+		const pogHandler: POGHandler = new POGHandler(config);
+		CONNECTION_MANAGER.addInstance(config.id, pogHandler);
 	}
 }
 

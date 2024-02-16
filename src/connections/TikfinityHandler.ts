@@ -4,6 +4,7 @@ import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import * as Text from '../utils/Text.js';
 import { InternalRequest, CALLERS, ProviderKey } from '../providers/backend/InternalRequest.js';
 import { ProviderManager } from '../providers/ProviderManager.js';
+import crypto from 'crypto';
 
 interface Action {
 	actionId: string;
@@ -67,26 +68,59 @@ export class TikfinityWebServerHandler extends WebServerInst {
 				return;
 			}
 
+			const __provider = this.providerManager.lookupProvider(body.categoryId);
 			const reqId = crypto.randomUUID();
-
-			console.log(
-				`TikfinityWebServerHandler >> POST /api/features/actions/exec >> Request ID: ${reqId}`
-			);
-
 			const pk: ProviderKey = {
 				categoryId: body.categoryId,
 				actions: [body.actionId]
 			};
 
+			if (!__provider) {
+				res.status(400);
+				res.json({
+					message: `No provider found for categoryId: ${body.categoryId}`
+				});
+				return;
+			}
+
+			if (!__provider.has(body.categoryId)) {
+				res.status(400);
+				res.json({
+					message: `No category found for categoryId: ${body.categoryId}`
+				});
+				return;
+			}
+
+			const __actionmap = __provider.getActionMap(pk.categoryId);
+			const actionNames: string[] = [];
+
+			for (const action of pk.actions) {
+				const __action = __actionmap.get(action);
+				if (__action) {
+					actionNames.push(__action.name);
+				}
+			}
+
 			const request: InternalRequest = {
 				caller: CALLERS.TIKFINITY,
 				requestId: reqId,
-				providerId: this.providerManager.lookupProvider(body.categoryId)?.providerId || '',
+				providerId: __provider.providerId || '',
 				providerKey: pk,
 				bypass_cooldown: body.bypass_cooldown ?? false,
 				context: body.context ?? {}
 			};
 
+			const coinInfo: string = body.context?.coins ? `with ${body.context.coins} coins` : '';
+			const username: string = body.context?.username ?? '<<unknown>>';
+
+			// Log the action
+			this.emit(INTERNAL_EVENTS.INFO, {
+				data: {
+					message: `Action '${actionNames.join(', ')}' executed by '${username}' ${coinInfo}`
+				}
+			});
+
+			// submit event to the backend
 			this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
 
 			res.json({

@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Condition } from './backend/Condition.js';
+import { InternalRequest } from '../providers/backend/InternalRequest.js';
 
 export interface BaseEvent {
 	event: string;
@@ -160,6 +161,7 @@ export class TriggerManager extends Emitting {
 			if (conditionsMet) {
 				for (const __request of trigger.actions) {
 					const __baseEvent: BaseEvent = eventData;
+					const request = JSON.parse(JSON.stringify(__request)) as InternalRequest;
 					const nickname = eventData.nickname;
 
 					trigger.lastExecuted = Date.now();
@@ -172,10 +174,27 @@ export class TriggerManager extends Emitting {
 							}
 						});
 					}
-					
+
 					// submit event to the backend
-					__request.requestId = crypto.randomUUID();
-					this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: __request });
+					request.requestId = crypto.randomUUID();
+					this.injectData(request, eventData);
+
+					this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
+				}
+			}
+		}
+	}
+
+	private injectData(request: InternalRequest, data: any) {
+		for (const key in request.context) {
+			const value = request.context[key];
+
+			if (typeof value === 'string' && value.startsWith('$$')) {
+				const path = value.substring(2);
+				const result = JSONPath({ path, json: data });
+
+				if (result.length === 1) {
+					request.context[key] = result[0];
 				}
 			}
 		}

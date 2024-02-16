@@ -22,6 +22,7 @@ export interface TITSMessage {
 
 export interface TITSActionData extends ActionData {
 	cooldown: number;
+	lastTriggered?: number;
 }
 
 type PendingRequest = {
@@ -171,8 +172,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	}
 
 	executeRequest(request: InternalRequest) {
-		const { caller, requestId, providerId, providerKey, bypass_cooldown, context } = request;
-		const __info = `(requestId: ${request.requestId}, caller: ${caller})`;
+		const { caller, requestId, providerKey, bypass_cooldown, context } = request;
+		const __info = `(requestId: ${requestId}, caller: ${caller})`;
 
 		if (!providerKey) {
 			this.emit(INTERNAL_EVENTS.NOTIF, {
@@ -192,16 +193,39 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			return;
 		}
 
-		const actionInfo: string = actions.length > 1 ? `[${actions.join(', ')}]` : `[${actions[0]}]`;
+		const actionInfo: string = `[${actions.join(', ')}]`;
 		// const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
 		// const username: string = context?.username ?? '<<unknown>>';
+		const actionMap: ActionMap<TITSActionData> = this.provider.getActionMap(categoryId);
+		const actionDatas: TITSActionData[] = providerKey.actions.map((id) => actionMap.get(id));
+
+		// check if any of the actions are currently on cooldown
+		const hasCooldown = actionDatas.some((action) => {
+			const last = action.lastTriggered ?? 0;
+			const result = Date.now() - last < action.cooldown;
+			return result;
+		});
+
+		if (!bypass_cooldown && hasCooldown) {
+			this.emit(INTERNAL_EVENTS.INFO, {
+				data: {
+					message: `TITSHandler >> Action not executed, there is a cooldown on one or all of the actions. ${__info}`
+				}
+			});
+			return;
+		}
 
 		// TODO: Verbose Log Event (to file or console with debug flag)
 		this.emit(INTERNAL_EVENTS.INFO, {
 			data: {
-				message: `Action '${categoryId}' triggered by '${requestId}' with actions ${actionInfo}`
+				message: `Action '${categoryId}' executed with actions ${actionInfo} ${__info}`
 			}
 		});
+
+		// Update lastTriggered for all actions
+		for (const __action of actionDatas) {
+			__action.lastTriggered = Date.now();
+		}
 
 		switch (categoryId) {
 			case TITS_ACTIONS.ACTIVATE_TRIGGER:
@@ -278,10 +302,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			}
 		};
 
-		this.send(
-			req,
-			(error) => this.handleError(REQUEST_TYPES.THROW_ITEMS, error)
-		);
+		this.send(req, (error) => this.handleError(REQUEST_TYPES.THROW_ITEMS, error));
 	}
 
 	private handleTriggerRequest(triggerId: string, requestId: string = crypto.randomUUID()) {

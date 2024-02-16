@@ -29,7 +29,7 @@
 				},
 				"bypass_cooldown": false,
 				"context": {
-					"count": 5,
+					"count": 1,
 					"delay": 0.8
 				}
 			}
@@ -231,6 +231,38 @@
 				},
 				"bypass_cooldown": false,
 				"context": {}
+			}
+		]
+	},
+	{
+		"id": "73fc6e04-64cc-47f0-a7c9-879154631f25",
+		"name": "TTS for Tiktok",
+		"cooldown": 5000,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"conditions": [
+					{
+						"order": 0,
+						"data_path": "data.comment",
+						"negate": false,
+						"operation": "contains",
+						"value": "!tts"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": "internal",
+				"providerId": "vts-pog",
+				"context": {
+					"voice": "brian",
+					"username": "$$username",
+					"message": "$$data.comment"
+				}
 			}
 		]
 	}
