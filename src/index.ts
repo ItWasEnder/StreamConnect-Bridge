@@ -238,7 +238,7 @@ async function shutdown() {
 
 function printMainMenu() {
 	console.log(
-		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See command below. (${process.pid})`
+		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See commands below. (${process.pid})`
 	);
 	console.log(`-  Q exit the program.`);
 	console.log(`-  H see a list of commands.`);
