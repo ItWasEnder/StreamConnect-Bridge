@@ -21,11 +21,16 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
-				"event": "tits-throw-items",
-				"payload": {
-					"items": ["46e7af46-f7e6-4a33-b91b-5649864e3bf5"],
-					"count": 1
+				"caller": "internal",
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-throw-items",
+					"actions": ["46e7af46-f7e6-4a33-b91b-5649864e3bf5"]
+				},
+				"bypass_cooldown": false,
+				"context": {
+					"count": 5,
+					"delay": 0.8
 				}
 			}
 		]
@@ -52,11 +57,14 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
-				"event": "tits-activate-trigger",
-				"payload": {
-					"triggerId": "191c8a9f-1054-4aff-8743-9d110af2ff17"
-				}
+				"caller": "internal",
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-activate-trigger",
+					"actions": ["191c8a9f-1054-4aff-8743-9d110af2ff17"]
+				},
+				"bypass_cooldown": false,
+				"context": {}
 			}
 		]
 	},
@@ -82,11 +90,16 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
-				"event": "tits-throw-items",
-				"payload": {
-					"items": ["d7b5faaf-7f54-4756-8c03-45c9406fe89c"],
-					"count": 1
+				"caller": "internal",
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-throw-items",
+					"actions": ["d7b5faaf-7f54-4756-8c03-45c9406fe89c"]
+				},
+				"bypass_cooldown": false,
+				"context": {
+					"count": 1,
+					"delay": 0.8
 				}
 			}
 		]
@@ -113,11 +126,16 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
-				"event": "tits-throw-items",
-				"payload": {
-					"items": ["3e4f3616-059b-4284-b693-a8f6d6c34ef9"],
-					"count": 1
+				"caller": "internal",
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-throw-items",
+					"actions": ["3e4f3616-059b-4284-b693-a8f6d6c34ef9"]
+				},
+				"bypass_cooldown": false,
+				"context": {
+					"count": 1,
+					"delay": 0.8
 				}
 			}
 		]
@@ -144,11 +162,16 @@
 		],
 		"actions": [
 			{
-				"caller": 0,
-				"event": "tits-throw-items",
-				"payload": {
-					"items": ["6f7445fc-590c-4e72-aca4-8979de236795"],
-					"count": 1
+				"caller": "internal",
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-throw-items",
+					"actions": ["6f7445fc-590c-4e72-aca4-8979de236795"]
+				},
+				"bypass_cooldown": false,
+				"context": {
+					"count": 1,
+					"delay": 0.8
 				}
 			}
 		]
@@ -176,10 +199,13 @@
 		"actions": [
 			{
 				"caller": "internal",
-				"event": "tits-activate-trigger",
-				"payload": {
-					"triggerId": "2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"
-				}
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-activate-trigger",
+					"actions": ["2ba8adee-db5b-4e0d-a3fd-4baf704e9c71"]
+				},
+				"bypass_cooldown": false,
+				"context": {}
 			}
 		]
 	},
@@ -198,10 +224,13 @@
 		"actions": [
 			{
 				"caller": "internal",
-				"event": "tits-activate-trigger",
-				"payload": {
-					"triggerId": "ea89cce2-1c8a-4b4f-8ad2-fcd286f3f27d"
-				}
+				"providerId": "tits",
+				"providerKey": {
+					"categoryId": "tits-activate-trigger",
+					"actions": ["ea89cce2-1c8a-4b4f-8ad2-fcd286f3f27d"]
+				},
+				"bypass_cooldown": false,
+				"context": {}
 			}
 		]
 	}

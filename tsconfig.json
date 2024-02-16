@@ -4,8 +4,8 @@
 		// "paths": {
 		//     "@connections/*": ["src/connections/*"]
 		// },
-		"target": "es6",
-		"module": "es2020",
+		"target": "ESNext",
+		"module": "ESNext",
 		"outDir": "./dist",
 		"rootDir": "./src",
 		"strict": false,

@@ -2,8 +2,8 @@ import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
 import { WebServerInst } from './backend/WebServerInst.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import * as Text from '../utils/Text.js';
-import { TriggerManager } from '../triggers/TriggerManager.js';
-import { ActionRequest, CALLERS } from '../triggers/backend/ActionRequest.js';
+import { InternalRequest, CALLERS, ProviderKey } from '../providers/backend/InternalRequest.js';
+import { ProviderManager } from '../providers/ProviderManager.js';
 
 interface Action {
 	actionId: string;
@@ -18,7 +18,7 @@ interface Category {
 export class TikfinityWebServerHandler extends WebServerInst {
 	constructor(
 		private config: ConnectionConfig,
-		private triggerManager: TriggerManager
+		private providerManager: ProviderManager
 	) {
 		super(config.name, (config.info as WebHookInfo).port);
 	}
@@ -67,8 +67,25 @@ export class TikfinityWebServerHandler extends WebServerInst {
 				return;
 			}
 
-			const request: ActionRequest = req.body as ActionRequest;
-			request.caller = CALLERS.TIKFINITY;
+			const reqId = crypto.randomUUID();
+
+			console.log(
+				`TikfinityWebServerHandler >> POST /api/features/actions/exec >> Request ID: ${reqId}`
+			);
+
+			const pk: ProviderKey = {
+				categoryId: body.categoryId,
+				actions: [body.actionId]
+			};
+
+			const request: InternalRequest = {
+				caller: CALLERS.TIKFINITY,
+				requestId: reqId,
+				providerId: this.providerManager.lookupProvider(body.categoryId)?.providerId || '',
+				providerKey: pk,
+				bypass_cooldown: body.bypass_cooldown ?? false,
+				context: body.context ?? {}
+			};
 
 			this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
 
@@ -81,12 +98,13 @@ export class TikfinityWebServerHandler extends WebServerInst {
 	private getCategories(): Category[] {
 		const categories: Category[] = [];
 
-		for (const provider of this.triggerManager.getProviders()) {
+		for (const provider of this.providerManager.getProviders()) {
 			for (const category of provider.getCategories()) {
-				categories.push({
+				const __cat: Category = {
 					categoryId: category,
 					categoryName: Text.replaceAndCapitalize(category)
-				} as Category);
+				};
+				categories.push(__cat);
 			}
 		}
 
@@ -94,7 +112,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 	}
 
 	private getActions(categoryId: string): Action[] {
-		const provider = this.triggerManager.lookupProvider(categoryId);
+		const provider = this.providerManager.lookupProvider(categoryId);
 		const actions: Action[] = [];
 
 		if (!provider) {

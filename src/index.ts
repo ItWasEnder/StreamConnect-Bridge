@@ -20,6 +20,7 @@ import {
 	TiktokChat,
 	TiktokEvent
 } from './connections/TikTokHandler.js';
+import { ProviderManager } from './providers/ProviderManager.js';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -37,6 +38,7 @@ for (let i = 0; i < args.length; i++) {
 const CMD_HIST: Map<string, string> = new Map();
 const CONNECTION_MANAGER: ConnectionManager = new ConnectionManager();
 const FILE_MANAGER: FileManager = new FileManager(rootDir);
+const PROVIDER_MANAGER: ProviderManager = new ProviderManager(FILE_MANAGER);
 const TRIGGER_MANAGER: TriggerManager = new TriggerManager(FILE_MANAGER);
 const { program } = commander;
 
@@ -69,7 +71,7 @@ process.on('SIGINT', () => {
 });
 
 // Run the program
-console.clear();
+// console.clear();
 loadConfigs();
 
 // Setup handlers
@@ -133,6 +135,7 @@ async function handleCommand(action: string) {
 			console.log(`${Text.coloredPill(Text.COLORS.MAGENTA)} Sending TikTok chat message event...`);
 			const event: TiktokEvent = {
 				event: TIKTOK_EVENTS.CHAT,
+				nickname: 'Test',
 				username: 'test',
 				userId: 'test123',
 				followRole: FOLLOW_STATUS.FOLLOWER,
@@ -142,7 +145,7 @@ async function handleCommand(action: string) {
 				data: {
 					comment: _chat
 				} as TiktokChat
-			} as TiktokEvent;
+			};
 
 			EMITTER.emit(TIKTOK_EVENTS.CHAT, {
 				data: event
@@ -303,7 +306,7 @@ function setupTikfinityService() {
 	if (config?.enabled) {
 		const tikfinityHandler: TikfinityWebServerHandler = new TikfinityWebServerHandler(
 			config,
-			TRIGGER_MANAGER
+			PROVIDER_MANAGER
 		);
 
 		CONNECTION_MANAGER.addInstance(config.id, tikfinityHandler);
@@ -329,7 +332,7 @@ function setupTitsService() {
 
 		// Register this service
 		CONNECTION_MANAGER.addInstance(config.id, titsHandler);
-		TRIGGER_MANAGER.registerProvider(titsHandler.provider);
+		PROVIDER_MANAGER.registerProvider(titsHandler.provider);
 
 		titsHandler.start();
 	}

@@ -2,9 +2,10 @@ import { ConnectionConfig, WebSocketInfo } from './backend/Connection.js';
 import { WebSocketInst } from './backend/WebSocketInst.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { RawData } from 'ws';
-import crypto from 'crypto';
-import { ActionData, ActionProvider } from '../triggers/backend/ActionProvider.js';
+import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider.js';
 import { OptionsError } from '../utils/OptionsError.js';
+import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest.js';
+import crypto from 'crypto';
 
 export const TITS_ACTIONS = {
 	THROW_ITEMS: 'tits-throw-items',
@@ -17,6 +18,10 @@ export interface TITSMessage {
 	requestID: string;
 	messageType: string;
 	data: any;
+}
+
+export interface TITSActionData extends ActionData {
+	cooldown: number;
 }
 
 type PendingRequest = {
@@ -42,24 +47,32 @@ export const RESPONSE_TYPES = {
 };
 
 // WebSocket handler class
-export class TITSWebSocketHandler extends WebSocketInst {
+export class TITSWebSocketHandler extends WebSocketInst implements RequestExecuter {
 	private messageHandlers: Map<string, (data: TITSMessage) => void> = new Map();
 	private pendingRequests: Map<string, PendingRequest> = new Map();
 	private refreshInProgress = false;
 	private requestTimeoutMs = 5000;
 
 	private config: ConnectionConfig;
-	public provider: ActionProvider<ActionData>;
+	public provider: ActionProvider<TITSActionData>;
 
 	constructor(config: ConnectionConfig) {
 		super(config.name, (config.info as WebSocketInfo).url);
 		this.config = config;
 
-		this.provider = new ActionProvider(config.id, async () => {
+		this.provider = new ActionProvider<TITSActionData>(config.id, async () => {
 			const promise = this.refreshData();
 			const [items, triggers] = await promise;
 
 			return [items, triggers];
+		});
+
+		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, (payload) => {
+			const __request: InternalRequest = payload.data;
+
+			if (__request.providerId === this.provider.providerId) {
+				this.executeRequest(__request);
+			}
 		});
 
 		// Setup emmiters & listeners
@@ -67,7 +80,7 @@ export class TITSWebSocketHandler extends WebSocketInst {
 	}
 	/** public methods */
 
-	async refreshData(): Promise<[string, ActionData[]][]> {
+	async refreshData(): Promise<[string, TITSActionData[]][]> {
 		if (this.refreshInProgress) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: { message: `TITSHandler >> Data refresh currently in progress. Please wait.` }
@@ -100,10 +113,8 @@ export class TITSWebSocketHandler extends WebSocketInst {
 			]);
 
 			const [__items, __triggers]: [TITSMessage, TITSMessage] = result;
-
-			// Assuming these responses are directly usable - ensure this logic matches your application's needs
-			const itemsData: ActionData[] = this.processMessageResponse('items', __items);
-			const triggersData: ActionData[] = this.processMessageResponse('triggers', __triggers);
+			const itemsData: TITSActionData[] = this.processMessageResponse('items', __items);
+			const triggersData: TITSActionData[] = this.processMessageResponse('triggers', __triggers);
 
 			return [
 				[TITS_ACTIONS.THROW_ITEMS, itemsData],
@@ -123,11 +134,13 @@ export class TITSWebSocketHandler extends WebSocketInst {
 	}
 
 	sendItemsListRequest(): Promise<TITSMessage> {
+		const __requestId = crypto.randomUUID();
+
 		this.send(
 			{
 				apiName: 'TITSPublicApi',
 				apiVersion: '1.0',
-				requestID: crypto.randomUUID(),
+				requestID: __requestId,
 				messageType: REQUEST_TYPES.ITEM_LIST,
 				sendImage: false
 			},
@@ -135,24 +148,76 @@ export class TITSWebSocketHandler extends WebSocketInst {
 		);
 
 		return new Promise((resolve, reject) => {
-			this.pendingRequests.set(RESPONSE_TYPES.ITEM_LIST, { resolve, reject });
+			this.pendingRequests.set(__requestId, { resolve, reject });
 		});
 	}
 
 	sendTriggersListRequest(): Promise<TITSMessage> {
+		const __requestId = crypto.randomUUID();
+
 		this.send(
 			{
 				apiName: 'TITSPublicApi',
 				apiVersion: '1.0',
-				requestID: crypto.randomUUID(),
+				requestID: __requestId,
 				messageType: REQUEST_TYPES.TRIGGER_LIST
 			},
 			(error) => this.handleError(REQUEST_TYPES.TRIGGER_LIST, error)
 		);
 
 		return new Promise((resolve, reject) => {
-			this.pendingRequests.set(RESPONSE_TYPES.TRIGGER_LIST, { resolve, reject });
+			this.pendingRequests.set(__requestId, { resolve, reject });
 		});
+	}
+
+	executeRequest(request: InternalRequest) {
+		const { caller, requestId, providerId, providerKey, bypass_cooldown, context } = request;
+		const __info = `(requestId: ${request.requestId}, caller: ${caller})`;
+
+		if (!providerKey) {
+			this.emit(INTERNAL_EVENTS.NOTIF, {
+				data: { message: `TITSHandler >> Missing providerKey in request ${__info}` }
+			});
+			return;
+		}
+
+		const { categoryId, actions } = providerKey;
+
+		if (!this.provider.has(categoryId)) {
+			this.emit(INTERNAL_EVENTS.ERROR, {
+				data: {
+					message: `TITSHandler >> Unable to find category based on input of '${JSON.stringify(providerKey)}' ${__info}`
+				}
+			});
+			return;
+		}
+
+		const actionInfo: string = actions.length > 1 ? `[${actions.join(', ')}]` : `[${actions[0]}]`;
+		// const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
+		// const username: string = context?.username ?? '<<unknown>>';
+
+		// TODO: Verbose Log Event (to file or console with debug flag)
+		this.emit(INTERNAL_EVENTS.INFO, {
+			data: {
+				message: `Action '${categoryId}' triggered by '${requestId}' with actions ${actionInfo}`
+			}
+		});
+
+		switch (categoryId) {
+			case TITS_ACTIONS.ACTIVATE_TRIGGER:
+				for (const __action of actions) {
+					this.handleTriggerRequest(__action);
+				}
+				break;
+			case TITS_ACTIONS.THROW_ITEMS:
+				this.handleThrowRequest(actions, context?.count, context?.delay);
+				break;
+			default:
+				this.emit(INTERNAL_EVENTS.ERROR, {
+					data: { message: `TITSHandler >> Unhandled categoryId: ${categoryId}` }
+				});
+				return;
+		}
 	}
 
 	/** private methods */
@@ -166,51 +231,65 @@ export class TITSWebSocketHandler extends WebSocketInst {
 			const response: TITSMessage = JSON.parse(event.rawData.toString());
 			const handler = this.messageHandlers.get(response.messageType);
 
-			// check pending requests - resolve if found - then continue
-			const pendingRequest = this.pendingRequests.get(response.messageType);
+			// check pending requests - resolve if found - then return
+			const pendingRequest = this.pendingRequests.get(response.requestID);
 			if (pendingRequest) {
 				pendingRequest.resolve(response);
 				this.pendingRequests.delete(response.messageType);
+				return;
 			}
 
+			// Use custom handler if needed
 			if (handler) {
 				this.messageHandlers.get(response.messageType)(response);
-			} else {
-				this.emit(INTERNAL_EVENTS.ERROR, {
-					data: {
-						message: `TITSSocketHandler >> No handler found for message type: ${response.messageType}`
-					}
-				});
 			}
 		} catch (error) {
 			console.error('Error parsing incoming message:', error);
 		}
 	}
 
-	private handleThrowRequest(items: string[], count: number = 1, delay: number = 0.08) {
-		this.send(
-			{
-				apiName: 'TITSPublicApi',
-				apiVersion: '1.0',
-				requestID: crypto.randomUUID(),
-				messageType: REQUEST_TYPES.THROW_ITEMS,
-				delayTime: delay,
-				amountOfThrows: count,
-				errorOnMissingID: false,
+	private setup(): void {
+		this.setCallback(RESPONSE_TYPES.ERROR, (message: TITSMessage) => {
+			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
-					items: items
+					message: `TITSSocketHandler >> An error occured when attempting to call socket api.`
 				}
-			},
+			});
+			console.error(message.data);
+		});
+	}
+
+	private handleThrowRequest(
+		items: string[],
+		count: number = 1,
+		delay: number = 0.08,
+		requestId: string = crypto.randomUUID()
+	) {
+		const req = {
+			apiName: 'TITSPublicApi',
+			apiVersion: '1.0',
+			requestID: requestId,
+			messageType: REQUEST_TYPES.THROW_ITEMS,
+			delayTime: delay,
+			amountOfThrows: count,
+			errorOnMissingID: false,
+			data: {
+				items: items
+			}
+		};
+
+		this.send(
+			req,
 			(error) => this.handleError(REQUEST_TYPES.THROW_ITEMS, error)
 		);
 	}
 
-	private handleTriggerRequest(triggerId: string) {
+	private handleTriggerRequest(triggerId: string, requestId: string = crypto.randomUUID()) {
 		this.send(
 			{
 				apiName: 'TITSPublicApi',
 				apiVersion: '1.0',
-				requestID: crypto.randomUUID(),
+				requestID: requestId,
 				messageType: REQUEST_TYPES.TRIGGER_ACTIVATE,
 				data: {
 					triggerID: triggerId
@@ -231,66 +310,20 @@ export class TITSWebSocketHandler extends WebSocketInst {
 		console.error(error);
 	}
 
-	private processMessageResponse(key: string, msg: TITSMessage): ActionData[] {
+	private processMessageResponse(key: string, msg: TITSMessage): TITSActionData[] {
 		const _data = msg.data;
-		const actions: ActionData[] = [];
+		const actions: TITSActionData[] = [];
 		for (const _item of _data[key as keyof typeof _data]) {
 			const id = _item['ID'];
 			const name = _item['name'];
 
 			actions.push({
 				id: id,
-				name: name
+				name: name,
+				cooldown: 0
 			});
 		}
 
 		return actions;
-	}
-
-	private setup(): void {
-		// Setup event listeners
-		this.on(TITS_ACTIONS.THROW_ITEMS, (payload) => {
-			const { data } = payload;
-
-			if (data?.items) {
-				const count: number | undefined = data?.count;
-				const delay: number | undefined = data?.delay;
-
-				this.handleThrowRequest(data.items, count, delay);
-			} else {
-				this.emit(INTERNAL_EVENTS.ERROR, {
-					data: {
-						message: `TITSSocketHandler >> Trigger activate request made without 'triggerId' field.`
-					}
-				});
-			}
-		});
-
-		this.on(TITS_ACTIONS.ACTIVATE_TRIGGER, (payload) => {
-			const { data } = payload;
-
-			if (data?.triggerId) {
-				this.handleTriggerRequest(data.triggerId);
-			} else {
-				this.emit(INTERNAL_EVENTS.ERROR, {
-					data: {
-						message: `TITSSocketHandler >> Trigger activate request made without 'triggerId' field.`
-					}
-				});
-			}
-		});
-
-		// Set callbacks for handlers
-		const _empty = () => {};
-		Object.values(RESPONSE_TYPES).map((type) => this.setCallback(type, _empty));
-
-		this.setCallback(RESPONSE_TYPES.ERROR, (message: TITSMessage) => {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `TITSSocketHandler >> An error occured when attempting to call socket api.`
-				}
-			});
-			console.error(message.data);
-		});
 	}
 }

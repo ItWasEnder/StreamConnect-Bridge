@@ -32,7 +32,19 @@ export class ActionMap<T extends ActionData> {
 	 * @param action the action
 	 */
 	put(action: T) {
-		this.actionMap.set(action.id, action);
+		// Update the action if it already exists
+		if (this.actionMap.has(action.id)) {
+			const __action = this.actionMap.get(action.id);
+			
+			const __updated = {
+				...__action,
+				...action
+			};
+
+			this.actionMap.set(action.id, __updated);
+		} else {
+			this.actionMap.set(action.id, action);
+		}
 	}
 
 	/**
@@ -73,7 +85,7 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 
 	constructor(
 		public providerId: string,
-		private _loadActions: () => Promise<[categoryId: string, T[]][]>
+		private _loadActions: () => Promise<[string, T[]][]>
 	) {
 		super();
 	}
@@ -187,7 +199,7 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 				}
 
 				if (print) {
-					console.log(error);
+					console.error(error);
 				}
 			});
 	}
