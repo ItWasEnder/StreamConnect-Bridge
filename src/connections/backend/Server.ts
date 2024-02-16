@@ -6,7 +6,7 @@ export enum STATUS {
 	UNAVAILABLE
 }
 
-export abstract class Server extends Emitting {
+export abstract class Service extends Emitting {
 	abstract get service(): string;
 
 	abstract start(): void;

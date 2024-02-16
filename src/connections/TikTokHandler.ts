@@ -1,6 +1,6 @@
 import { WebcastPushConnection } from 'tiktok-live-connector';
 import { ConnectionConfig, TikTokInfo } from './backend/Connection.js';
-import { STATUS, Server } from './backend/Server.js';
+import { STATUS, Service } from './backend/Server.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { BaseEvent } from '../triggers/TriggerManager.js';
 
@@ -47,7 +47,7 @@ export interface TiktokSubscribe {
 }
 
 // TODO fix issue with proccess hanging when on shutdown
-export class TikTokHandler extends Server {
+export class TikTokHandler extends Service {
 	private config: ConnectionConfig;
 	private connection: WebcastPushConnection;
 	private reconnectAttempts: number = 0;

@@ -4,7 +4,7 @@ import * as Text from './utils/Text.js';
 import { ConnectionManager } from './connections/backend/ConnectionManager.js';
 import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler.js';
 import { ConnectionConfig } from './connections/backend/Connection.js';
-import { STATUS, Server } from './connections/backend/Server.js';
+import { STATUS, Service } from './connections/backend/Server.js';
 import { sleep } from './utils/Random.js';
 import chalk from 'chalk';
 import { TriggerManager } from './triggers/TriggerManager.js';
@@ -158,7 +158,7 @@ async function handleCommand(action: string) {
 			const serverConfigs = CONNECTION_MANAGER.getConfigs();
 
 			for (const config of serverConfigs) {
-				const server: Server | null = CONNECTION_MANAGER.getInstance(config.id);
+				const server: Service | null = CONNECTION_MANAGER.getInstance(config.id);
 				let statusBubble: string;
 
 				if (!server) {

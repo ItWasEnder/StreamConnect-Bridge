@@ -1,13 +1,13 @@
 import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import { Emitting } from '../../events/backend/Emmiting.js';
 import { ConnectionConfig } from './Connection.js';
-import { Server } from './Server.js';
+import { Service } from './Server.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
 export class ConnectionManager extends Emitting {
 	private configs: Map<string, ConnectionConfig>;
-	private managedInstances: Map<string, Server>;
+	private managedInstances: Map<string, Service>;
 
 	constructor() {
 		super();
@@ -71,7 +71,7 @@ export class ConnectionManager extends Emitting {
 		return Array.from(this.configs.values());
 	}
 
-	addInstance(key: string, instance: Server): void {
+	addInstance(key: string, instance: Service): void {
 		if (this.managedInstances.has(key)) {
 			throw new Error(`Instance with key ${key} already exists.`);
 		}
@@ -79,7 +79,7 @@ export class ConnectionManager extends Emitting {
 		this.managedInstances.set(key, instance);
 	}
 
-	getInstance(key: string): Server | null {
+	getInstance(key: string): Service | null {
 		const instance = this.managedInstances.get(key);
 		if (!instance) {
 			return null;
@@ -87,7 +87,7 @@ export class ConnectionManager extends Emitting {
 		return instance;
 	}
 
-	getInstances(): Server[] {
+	getInstances(): Service[] {
 		return Array.from(this.managedInstances.values());
 	}
 }

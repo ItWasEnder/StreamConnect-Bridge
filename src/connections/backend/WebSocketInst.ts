@@ -1,9 +1,9 @@
 import WebSocket, { RawData } from 'ws';
 import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
-import { STATUS, Server } from './Server.js';
+import { STATUS, Service } from './Server.js';
 import { sleep } from '../../utils/Random.js';
 
-export abstract class WebSocketInst extends Server {
+export abstract class WebSocketInst extends Service {
 	protected socket: WebSocket;
 	private attempts: number;
 	private connected: boolean;

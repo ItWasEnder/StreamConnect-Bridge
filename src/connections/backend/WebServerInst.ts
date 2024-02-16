@@ -1,11 +1,11 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import { STATUS, Server } from './Server.js';
+import { STATUS, Service } from './Server.js';
 import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
 import bodyParser from 'body-parser';
 import http from 'http';
 
-export abstract class WebServerInst extends Server {
+export abstract class WebServerInst extends Service {
 	private app: Express;
 	private server: http.Server;
 
