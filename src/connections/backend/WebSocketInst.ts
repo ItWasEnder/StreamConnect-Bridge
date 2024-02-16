@@ -5,17 +5,17 @@ import { sleep } from '../../utils/Random.js';
 
 export abstract class WebSocketInst extends Server {
 	protected socket: WebSocket;
-	private url: any;
 	private attempts: number;
 	private connected: boolean;
 
-	constructor(service: string, url: string) {
-		super(service);
+	constructor() {
+		super();
 		this.connected = false;
-		this.url = url;
-		this.service = service;
 		this.attempts = 0;
 	}
+
+	abstract get service(): string;
+	abstract get url(): string;
 
 	protected send(payload: object, callback: (err?: Error) => void) {
 		const data: string = JSON.stringify(payload);

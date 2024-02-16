@@ -57,7 +57,7 @@ export class TikTokHandler extends Server {
 	private clientDisconnected: boolean = false;
 
 	constructor(config: ConnectionConfig) {
-		super(config.name);
+		super();
 		this.config = config;
 		this.connection = null;
 
@@ -147,6 +147,10 @@ export class TikTokHandler extends Server {
 			});
 			this.sceduleReconnect();
 		});
+	}
+
+	get service(): string {
+		return this.config.name;
 	}
 
 	async start(): Promise<void> {

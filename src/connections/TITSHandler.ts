@@ -58,7 +58,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	public provider: ActionProvider<TITSActionData>;
 
 	constructor(config: ConnectionConfig) {
-		super(config.name, (config.info as WebSocketInfo).url);
+		super();
 		this.config = config;
 
 		this.provider = new ActionProvider<TITSActionData>(config.id, async () => {
@@ -79,7 +79,16 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		// Setup emmiters & listeners
 		this.setup();
 	}
+
 	/** public methods */
+
+	get service(): string {
+		return this.config.name;
+	}
+
+	get url(): string {
+		return (this.config.info as WebSocketInfo).url;
+	}
 
 	async refreshData(): Promise<[string, TITSActionData[]][]> {
 		if (this.refreshInProgress) {

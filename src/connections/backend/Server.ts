@@ -7,12 +7,7 @@ export enum STATUS {
 }
 
 export abstract class Server extends Emitting {
-	public service: string;
-
-	constructor(service: string) {
-		super();
-		this.service = service;
-	}
+	abstract get service(): string;
 
 	abstract start(): void;
 	abstract stop(): void;

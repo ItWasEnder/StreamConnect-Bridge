@@ -21,7 +21,15 @@ export class TikfinityWebServerHandler extends WebServerInst {
 		private config: ConnectionConfig,
 		private providerManager: ProviderManager
 	) {
-		super(config.name, (config.info as WebHookInfo).port);
+		super();
+	}
+
+	get service(): string {
+		return this.config.name;
+	}
+
+	get port(): number {
+		return (this.config.info as WebHookInfo).port;
 	}
 
 	setupRoutes() {

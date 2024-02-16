@@ -10,7 +10,7 @@ export class POGHandler extends Server implements RequestExecuter {
 	private port: number;
 
 	constructor(config: ConnectionConfig) {
-		super(config.id);
+		super();
 		this.config = config;
 
 		const { host, port } = config.info as WebHookInfo;
@@ -36,6 +36,10 @@ export class POGHandler extends Server implements RequestExecuter {
 
 			this.executeRequest(__request);
 		});
+	}
+
+	get service(): string {
+		return this.config.name;
 	}
 
 	async sendTTSRequest(
