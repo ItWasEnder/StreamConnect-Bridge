@@ -248,7 +248,7 @@
 						"order": 0,
 						"data_path": "data.comment",
 						"negate": false,
-						"operation": "contains",
+						"operation": "starts_with",
 						"value": "!tts"
 					}
 				]

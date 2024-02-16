@@ -161,8 +161,8 @@ export class TriggerManager extends Emitting {
 			if (conditionsMet) {
 				for (const __request of trigger.actions) {
 					const __baseEvent: BaseEvent = eventData;
-					const request = JSON.parse(JSON.stringify(__request)) as InternalRequest;
-					const nickname = eventData.nickname;
+					const request: InternalRequest = JSON.parse(JSON.stringify(__request));
+					const nickname: string | undefined = eventData?.nickname;
 
 					trigger.lastExecuted = Date.now();
 

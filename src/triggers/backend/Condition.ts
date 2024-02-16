@@ -3,6 +3,7 @@ import { JSONPath } from 'jsonpath-plus';
 export enum OperationType {
 	EQUALS = 'equals',
 	CONTAINS = 'contains',
+	STARTS_WITH = 'starts_with',
 	GREATER_THAN = 'greater_than',
 	LESS_THAN = 'less_than'
 }
@@ -54,6 +55,16 @@ export class Condition {
 
 				const stringValue = this.value as string;
 				result = result = dataValue.includes(stringValue);
+				break;
+			case OperationType.STARTS_WITH:
+				if (typeof dataValue !== 'string') {
+					throw new Error(
+						`Cannot use operation 'starts_with' on data at path ${this.data_path}. Data is not a string.`
+					);
+				}
+
+				const startsWithString = this.value as string;
+				result = dataValue.startsWith(startsWithString);
 				break;
 			case OperationType.GREATER_THAN:
 				if (typeof dataValue !== 'number') {

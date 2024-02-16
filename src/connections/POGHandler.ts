@@ -17,12 +17,24 @@ export class POGHandler extends Server implements RequestExecuter {
 		this.host = host;
 		this.port = port;
 
-		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, (payload) => {
+		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, async (payload) => {
 			const __request: InternalRequest = payload.data;
+			const __info = `(requestId: ${__request.requestId}, caller: ${__request.caller})`;
 
-			if (__request.providerId === this.config.id) {
-				this.executeRequest(__request);
+			if (__request.providerId !== this.config.id) {
+				return;
 			}
+
+			if ((await this.status()) !== STATUS.ONLINE) {
+				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+					data: {
+						message: `POGHandler >> Action cancelled, connection is not currently available ${__info}`
+					}
+				});
+				return;
+			}
+
+			this.executeRequest(__request);
 		});
 	}
 
@@ -45,6 +57,7 @@ export class POGHandler extends Server implements RequestExecuter {
 
 	executeRequest(request: InternalRequest): void {
 		const { context } = request;
+		const __info = `(requestId: ${request.requestId}, caller: ${request.caller})`;
 
 		const { username, voice = 'brian', service = 'monster', limit = '350', message = '' } = context;
 		const __message: string = message.replace(/^!\w+\s/, '');
@@ -57,7 +70,9 @@ export class POGHandler extends Server implements RequestExecuter {
 			})
 			.catch((error) => {
 				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-					data: { message: `Error occurred trying to execute TTS action by '${username}'` }
+					data: {
+						message: `POGHandler >> Error occurred trying to execute TTS action by '${username}' ${__info}`
+					}
 				});
 				console.error(error);
 			});
@@ -78,9 +93,6 @@ export class POGHandler extends Server implements RequestExecuter {
 			const data = await this.sendHttpRequest(url);
 			return data === '1' ? STATUS.ONLINE : STATUS.UNAVAILABLE;
 		} catch (error) {
-			if (error.code !== 'ECONNREFUSED') {
-				console.log(error);
-			}
 			return STATUS.OFFLINE;
 		}
 	}
