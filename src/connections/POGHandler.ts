@@ -78,7 +78,9 @@ export class POGHandler extends Server implements RequestExecuter {
 			const data = await this.sendHttpRequest(url);
 			return data === '1' ? STATUS.ONLINE : STATUS.UNAVAILABLE;
 		} catch (error) {
-			console.log(error);
+			if (error.code !== 'ECONNREFUSED') {
+				console.log(error);
+			}
 			return STATUS.OFFLINE;
 		}
 	}
