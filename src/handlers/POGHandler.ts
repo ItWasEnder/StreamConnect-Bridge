@@ -1,7 +1,7 @@
 import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest.js';
-import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
-import { STATUS, Service } from './backend/Server.js';
+import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection.js';
+import { STATUS, Service } from '../connections/backend/Server.js';
 import http from 'http';
 
 export class POGHandler extends Service implements RequestExecuter {

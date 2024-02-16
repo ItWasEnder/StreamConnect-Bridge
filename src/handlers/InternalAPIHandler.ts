@@ -1,12 +1,8 @@
-import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
+import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection.js';
 import { TriggerManager } from '../triggers/TriggerManager.js';
-import { WebServerInst } from './backend/WebServerInst.js';
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import * as Text from '../utils/Text.js';
-import { ConnectionManager } from './backend/ConnectionManager.js';
-import { InternalRequest, CALLERS } from '../providers/backend/InternalRequest.js';
+import { WebServerInst } from '../connections/backend/WebServerInst.js';
+import { ConnectionManager } from '../connections/ConnectionManager.js';
 import { ProviderManager } from '../providers/ProviderManager.js';
-import { ActionData, ActionMap } from '../providers/backend/ActionProvider.js';
 
 export class InternapAPIHandler extends WebServerInst {
 	constructor(
@@ -15,8 +11,16 @@ export class InternapAPIHandler extends WebServerInst {
 		public triggersManager: TriggerManager,
 		public providerManager: ProviderManager
 	) {
-		super(config.name, (config.info as WebHookInfo).port);
+		super();
 		this.config = config;
+	}
+
+	get service(): string {
+		return this.config.name;
+	}
+
+	get port(): number {
+		return (this.config.info as WebHookInfo).port;
 	}
 
 	setupRoutes() {

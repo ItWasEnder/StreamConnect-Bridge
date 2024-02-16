@@ -1,7 +1,7 @@
-import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
-import { Emitting } from '../../events/backend/Emmiting.js';
-import { ConnectionConfig } from './Connection.js';
-import { Service } from './Server.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { Emitting } from '../events/backend/Emmiting.js';
+import { ConnectionConfig } from './backend/Connection.js';
+import { Service } from './backend/Server.js';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -22,7 +22,7 @@ export class ConnectionManager extends Emitting {
 		});
 	}
 
-	loadConfigs(): void {
+	load(): void {
 		// try {
 		const filePath = path.join(process.cwd(), 'storage', 'modules.json');
 		const rawData = fs.readFileSync(filePath, 'utf-8');

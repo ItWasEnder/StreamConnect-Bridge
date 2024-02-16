@@ -32,8 +32,10 @@ export class TriggerManager extends Emitting {
 			this.clearAll();
 			this.loadTriggers(_path);
 		});
+	}
 
-		this.loadTriggers(fileManager.getFullPath(TriggerManager.TRIGGERS_PATH));
+	load() {
+		this.loadTriggers(this.fileManager.getFullPath(TriggerManager.TRIGGERS_PATH));
 	}
 
 	/**

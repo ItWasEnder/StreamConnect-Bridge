@@ -1,5 +1,5 @@
-import { ConnectionConfig, WebSocketInfo } from './backend/Connection.js';
-import { WebSocketInst } from './backend/WebSocketInst.js';
+import { ConnectionConfig, WebSocketInfo } from '../connections/backend/Connection.js';
+import { WebSocketInst } from '../connections/backend/WebSocketInst.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import { RawData } from 'ws';
 import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider.js';

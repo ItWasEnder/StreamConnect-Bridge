@@ -1,5 +1,5 @@
-import { ConnectionConfig, WebHookInfo } from './backend/Connection.js';
-import { WebServerInst } from './backend/WebServerInst.js';
+import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection.js';
+import { WebServerInst } from '../connections/backend/WebServerInst.js';
 import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
 import * as Text from '../utils/Text.js';
 import { InternalRequest, CALLERS, ProviderKey } from '../providers/backend/InternalRequest.js';

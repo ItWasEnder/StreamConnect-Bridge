@@ -1,7 +1,6 @@
 import inquirer from 'inquirer';
-import * as commander from 'commander';
 import * as Text from './utils/Text.js';
-import { ConnectionManager } from './connections/backend/ConnectionManager.js';
+import { ConnectionManager } from './connections/ConnectionManager.js';
 import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler.js';
 import { ConnectionConfig } from './connections/backend/Connection.js';
 import { STATUS, Service } from './connections/backend/Server.js';
@@ -15,11 +14,11 @@ import {
 	TikTokHandler,
 	TiktokChat,
 	TiktokEvent
-} from './connections/TikTokHandler.js';
+} from './handlers/TikTokHandler.js';
 import { ProviderManager } from './providers/ProviderManager.js';
-import { TikfinityWebServerHandler } from './connections/TikfinityHandler.js';
-import { TITSWebSocketHandler } from './connections/TITSHandler.js';
-import { POGHandler } from './connections/POGHandler.js';
+import { TikfinityWebServerHandler } from './handlers/TikfinityHandler.js';
+import { TITSWebSocketHandler } from './handlers/TITSHandler.js';
+import { POGHandler } from './handlers/POGHandler.js';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -39,13 +38,9 @@ const CONNECTION_MANAGER: ConnectionManager = new ConnectionManager();
 const FILE_MANAGER: FileManager = new FileManager(rootDir);
 const PROVIDER_MANAGER: ProviderManager = new ProviderManager(FILE_MANAGER);
 const TRIGGER_MANAGER: TriggerManager = new TriggerManager(FILE_MANAGER);
-const { program } = commander;
 
 let exit: boolean = false;
 let shutdownAttempts: number = 0;
-
-// Set up commander
-program.version('1.0.0').description('A simple CLI application.');
 
 // Proccess hooks
 process.on('unhandledRejection', (reason, promise) => {
@@ -255,7 +250,8 @@ function printMainMenu() {
 function loadConfigs() {
 	try {
 		// Load connection configs
-		CONNECTION_MANAGER.loadConfigs();
+		CONNECTION_MANAGER.load();
+		TRIGGER_MANAGER.load();
 		EMITTER.emit(INTERNAL_EVENTS.GOOD, { data: { message: 'Configurations loaded...' } });
 	} catch (error) {
 		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
