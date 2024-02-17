@@ -34,8 +34,8 @@ for (let i = 0; i < args.length; i++) {
 }
 
 const CMD_HIST: Map<string, string> = new Map();
-const CONNECTION_MANAGER: ConnectionManager = new ConnectionManager();
 const FILE_MANAGER: FileManager = new FileManager(rootDir);
+const CONNECTION_MANAGER: ConnectionManager = new ConnectionManager(FILE_MANAGER);
 const PROVIDER_MANAGER: ProviderManager = new ProviderManager(FILE_MANAGER);
 const TRIGGER_MANAGER: TriggerManager = new TriggerManager(FILE_MANAGER);
 
