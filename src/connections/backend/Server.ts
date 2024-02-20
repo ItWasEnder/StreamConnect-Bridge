@@ -1,4 +1,4 @@
-import { Emitting } from '../../events/backend/Emmiting.js';
+import { Emitting } from '../../events/backend/Emmiting';
 
 export enum STATUS {
 	ONLINE,

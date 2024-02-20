@@ -1,10 +1,10 @@
-import { ConnectionConfig, WebSocketInfo } from '../connections/backend/Connection.js';
-import { WebSocketInst } from '../connections/backend/WebSocketInst.js';
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
+import { ConnectionConfig, WebSocketInfo } from '../connections/backend/Connection';
+import { WebSocketInst } from '../connections/backend/WebSocketInst';
+import { INTERNAL_EVENTS } from '../events/EventsHandler';
 import { RawData } from 'ws';
-import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider.js';
-import { OptionsError } from '../utils/OptionsError.js';
-import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest.js';
+import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider';
+import { OptionsError } from '../utils/OptionsError';
+import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest';
 import crypto from 'crypto';
 
 export const TITS_ACTIONS = {

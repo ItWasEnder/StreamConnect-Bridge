@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+// import chalk from 'chalk';
 
 export const PILL = '•';
 export const COLORS = {
@@ -24,7 +24,8 @@ export function colorizeText(text: string, color: string): string {
 	}
 
 	// Dynamically apply the selected color
-	const coloredText = chalk[color](text);
+	// const coloredText = chalk[color](text);
+	const coloredText = text;
 
 	return coloredText;
 }

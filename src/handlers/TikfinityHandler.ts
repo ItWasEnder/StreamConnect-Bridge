@@ -1,9 +1,9 @@
-import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection.js';
-import { WebServerInst } from '../connections/backend/WebServerInst.js';
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import * as Text from '../utils/Text.js';
-import { InternalRequest, CALLERS, ProviderKey } from '../providers/backend/InternalRequest.js';
-import { ProviderManager } from '../providers/ProviderManager.js';
+import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection';
+import { WebServerInst } from '../connections/backend/WebServerInst';
+import { INTERNAL_EVENTS } from '../events/EventsHandler';
+import * as Text from '../utils/Text';
+import { InternalRequest, CALLERS, ProviderKey } from '../providers/backend/InternalRequest';
+import { ProviderManager } from '../providers/ProviderManager';
 import crypto from 'crypto';
 
 interface Action {

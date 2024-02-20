@@ -1,8 +1,8 @@
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { Emitting } from '../events/backend/Emmiting.js';
-import { FileManager } from '../utils/FileManager.js';
-import { ConnectionConfig } from './backend/Connection.js';
-import { Service } from './backend/Server.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler';
+import { Emitting } from '../events/backend/Emmiting';
+import { FileManager } from '../utils/FileManager';
+import { ConnectionConfig } from './backend/Connection';
+import { Service } from './backend/Server';
 import * as fs from 'fs';
 import * as path from 'path';
 

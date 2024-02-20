@@ -1,7 +1,7 @@
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { Emitting } from '../events/backend/Emmiting.js';
-import { FileManager } from '../utils/FileManager.js';
-import { ActionProvider, ActionData } from './backend/ActionProvider.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler';
+import { Emitting } from '../events/backend/Emmiting';
+import { FileManager } from '../utils/FileManager';
+import { ActionProvider, ActionData } from './backend/ActionProvider';
 
 /**
  * This class is a manager for ActionProviders which store actions and categories that can be used to executed requests on 3rd-party applications

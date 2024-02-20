@@ -1,6 +1,6 @@
-import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
-import { Emitting } from '../../events/backend/Emmiting.js';
-import { OptionsError } from '../../utils/OptionsError.js';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler';
+import { Emitting } from '../../events/backend/Emmiting';
+import { OptionsError } from '../../utils/OptionsError';
 
 export interface ActionData {
 	id: string;

@@ -1,5 +1,5 @@
-import { EMITTER } from '../EventsHandler.js';
-import { Payload } from './Emitter.js';
+import { EMITTER } from '../EventsHandler';
+import { Payload } from './Emitter';
 
 export abstract class Emitting {
 	/**

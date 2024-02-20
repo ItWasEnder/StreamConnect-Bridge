@@ -1,8 +1,8 @@
-import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection.js';
-import { TriggerManager } from '../triggers/TriggerManager.js';
-import { WebServerInst } from '../connections/backend/WebServerInst.js';
-import { ConnectionManager } from '../connections/ConnectionManager.js';
-import { ProviderManager } from '../providers/ProviderManager.js';
+import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection';
+import { TriggerManager } from '../triggers/TriggerManager';
+import { WebServerInst } from '../connections/backend/WebServerInst';
+import { ConnectionManager } from '../connections/ConnectionManager';
+import { ProviderManager } from '../providers/ProviderManager';
 
 export class InternapAPIHandler extends WebServerInst {
 	constructor(

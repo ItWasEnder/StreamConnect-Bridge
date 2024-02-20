@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import { STATUS, Service } from './Server.js';
-import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
+import { STATUS, Service } from './Server';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler';
 import bodyParser from 'body-parser';
 import http from 'http';
 

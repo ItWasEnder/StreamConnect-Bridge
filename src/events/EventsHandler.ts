@@ -1,5 +1,5 @@
-import { Emitter } from './backend/Emitter.js';
-import * as Text from '../utils/Text.js';
+import { Emitter } from './backend/Emitter';
+import * as Text from '../utils/Text';
 
 export const EMITTER = new Emitter();
 

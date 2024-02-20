@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { Condition } from './Condition.js';
-import { InternalRequest } from '../../providers/backend/InternalRequest.js';
+import { Condition } from './Condition';
+import { InternalRequest } from '../../providers/backend/InternalRequest';
 
 export class EventMapping {
 	event: string;

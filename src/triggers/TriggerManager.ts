@@ -1,14 +1,14 @@
-import { INTERNAL_EVENTS } from '../events/EventsHandler.js';
-import { Emitting } from '../events/backend/Emmiting.js';
+import { INTERNAL_EVENTS } from '../events/EventsHandler';
+import { Emitting } from '../events/backend/Emmiting';
 import { JSONPath } from 'jsonpath-plus';
-import { Payload } from '../events/backend/Emitter.js';
-import { FileManager } from '../utils/FileManager.js';
-import { EventMapping, Trigger } from './backend/Trigger.js';
+import { Payload } from '../events/backend/Emitter';
+import { FileManager } from '../utils/FileManager';
+import { EventMapping, Trigger } from './backend/Trigger';
 import crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Condition } from './backend/Condition.js';
-import { InternalRequest } from '../providers/backend/InternalRequest.js';
+import { Condition } from './backend/Condition';
+import { InternalRequest } from '../providers/backend/InternalRequest';
 
 export interface BaseEvent {
 	event: string;

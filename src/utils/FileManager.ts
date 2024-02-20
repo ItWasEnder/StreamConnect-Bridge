@@ -1,5 +1,5 @@
-import { INTERNAL_EVENTS, EMITTER } from '../events/EventsHandler.js';
-import { Emitting } from '../events/backend/Emmiting.js';
+import { INTERNAL_EVENTS, EMITTER } from '../events/EventsHandler';
+import { Emitting } from '../events/backend/Emmiting';
 import * as chokidar from 'chokidar';
 import * as fs from 'fs';
 import * as _path from 'path';

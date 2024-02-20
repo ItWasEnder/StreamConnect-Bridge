@@ -1,24 +1,24 @@
 import inquirer from 'inquirer';
-import * as Text from './utils/Text.js';
-import { ConnectionManager } from './connections/ConnectionManager.js';
-import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler.js';
-import { ConnectionConfig } from './connections/backend/Connection.js';
-import { STATUS, Service } from './connections/backend/Server.js';
-import { sleep } from './utils/Random.js';
+import * as Text from './utils/Text';
+import { ConnectionManager } from './connections/ConnectionManager';
+import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler';
+import { ConnectionConfig } from './connections/backend/Connection';
+import { STATUS, Service } from './connections/backend/Server';
+import { sleep } from './utils/Random';
 import chalk from 'chalk';
-import { TriggerManager } from './triggers/TriggerManager.js';
-import { FileManager } from './utils/FileManager.js';
+import { TriggerManager } from './triggers/TriggerManager';
+import { FileManager } from './utils/FileManager';
 import {
 	FOLLOW_STATUS,
 	TIKTOK_EVENTS,
 	TikTokHandler,
 	TiktokChat,
 	TiktokEvent
-} from './handlers/TikTokHandler.js';
-import { ProviderManager } from './providers/ProviderManager.js';
-import { TikfinityWebServerHandler } from './handlers/TikfinityHandler.js';
-import { TITSWebSocketHandler } from './handlers/TITSHandler.js';
-import { POGHandler } from './handlers/POGHandler.js';
+} from './handlers/TikTokHandler';
+import { ProviderManager } from './providers/ProviderManager';
+import { TikfinityWebServerHandler } from './handlers/TikfinityHandler';
+import { TITSWebSocketHandler } from './handlers/TITSHandler';
+import { POGHandler } from './handlers/POGHandler';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements

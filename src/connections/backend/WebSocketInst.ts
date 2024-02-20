@@ -1,7 +1,7 @@
 import WebSocket, { RawData } from 'ws';
-import { INTERNAL_EVENTS } from '../../events/EventsHandler.js';
-import { STATUS, Service } from './Server.js';
-import { sleep } from '../../utils/Random.js';
+import { INTERNAL_EVENTS } from '../../events/EventsHandler';
+import { STATUS, Service } from './Server';
+import { sleep } from '../../utils/Random';
 
 export abstract class WebSocketInst extends Service {
 	protected socket: WebSocket;
