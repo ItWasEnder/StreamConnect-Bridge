@@ -1,9 +1,9 @@
 import { CALLERS, InternalRequest } from '../../providers/backend/InternalRequest';
 import { EventMapping, Trigger } from '../../triggers/backend/Trigger';
-import crypto from 'crypto';
-import { faker } from '@faker-js/faker';
 import { FOLLOW_STATUS, TIKTOK_EVENTS, TiktokEvent } from '../../handlers/TikTokHandler';
 import { TITS_ACTIONS } from '../../handlers/TITSHandler';
+import { faker } from '@faker-js/faker';
+import crypto from 'crypto';
 
 export function createTriggers(amount: number): Trigger[] {
 	const triggers = [];
@@ -39,7 +39,7 @@ export function createTrigger(options?: {
 			caller: randomEventCaller(),
 			providerId: 'tits',
 			providerKey: {
-				categoryId: faker.helpers.arrayElement(Object.keys(TITS_ACTIONS)),
+				categoryId: faker.helpers.arrayElement(Object.values(TITS_ACTIONS)),
 				actions: [crypto.randomUUID()]
 			},
 			bypass_cooldown: false,
