@@ -4,6 +4,7 @@ import { FOLLOW_STATUS, TIKTOK_EVENTS, TiktokEvent } from '../../handlers/TikTok
 import { TITS_ACTIONS } from '../../handlers/TITSHandler';
 import { faker } from '@faker-js/faker';
 import crypto from 'crypto';
+import { Condition, OperationType } from '../../triggers/backend/Condition';
 
 export function createTriggers(amount: number): Trigger[] {
 	const triggers = [];
@@ -94,4 +95,18 @@ export function randomEventCaller(): CALLERS {
 
 export function randomTiktokFollowStatus(): FOLLOW_STATUS {
 	return faker.helpers.arrayElement(Object.values(FOLLOW_STATUS) as FOLLOW_STATUS[]);
+}
+export function createCondition(options?: {
+	path?: string;
+	negate?: boolean;
+	value?: string | number;
+	operation?: OperationType;
+}): Condition {
+	return new Condition({
+		order: 0,
+		data_path: options?.path || 'data.test',
+		negate: options?.negate ?? false,
+		operation: options?.operation || OperationType.EQUALS,
+		value: options?.value || 'test'
+	});
 }

@@ -1,6 +1,6 @@
 import { WebcastPushConnection } from 'tiktok-live-connector';
 import { ConnectionConfig, TikTokInfo } from '../connections/backend/Connection';
-import { STATUS, Service } from '../connections/backend/Server';
+import { STATUS, Service } from '../connections/backend/Service';
 import { INTERNAL_EVENTS } from '../events/EventsHandler';
 import { BaseEvent } from '../triggers/TriggerManager';
 

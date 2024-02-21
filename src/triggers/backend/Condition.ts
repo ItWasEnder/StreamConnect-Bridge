@@ -38,53 +38,53 @@ export class Condition {
 			return false;
 		}
 
-		const dataValue = exact_data[0];
+		const inputData = exact_data[0];
 
 		let result = false;
 
 		switch (this.operation) {
 			case OperationType.EQUALS:
-				result = dataValue === this.value;
+				result = inputData === this.value;
 				break;
 			case OperationType.CONTAINS:
-				if (typeof dataValue !== 'string') {
+				if (typeof inputData !== 'string') {
 					throw new Error(
 						`Cannot use operation 'contains' on data at path ${this.data_path}. Data is not a string.`
 					);
 				}
 
 				const stringValue = this.value as string;
-				result = result = dataValue.includes(stringValue);
+				result = stringValue.includes(inputData);
 				break;
 			case OperationType.STARTS_WITH:
-				if (typeof dataValue !== 'string') {
+				if (typeof inputData !== 'string') {
 					throw new Error(
 						`Cannot use operation 'starts_with' on data at path ${this.data_path}. Data is not a string.`
 					);
 				}
 
-				const startsWithString = this.value as string;
-				result = dataValue.startsWith(startsWithString);
+				const stringValue_starts = this.value as string;
+				result = stringValue_starts.includes(inputData);
 				break;
 			case OperationType.GREATER_THAN:
-				if (typeof dataValue !== 'number') {
+				if (typeof inputData !== 'number') {
 					throw new Error(
 						`Cannot use operation 'greater_than' on data at path ${this.data_path}. Data is not a number.`
 					);
 				}
 
 				const numericValue = this.value as number;
-				result = dataValue > numericValue;
+				result = inputData > numericValue;
 				break;
 			case OperationType.LESS_THAN:
-				if (typeof dataValue !== 'number') {
+				if (typeof inputData !== 'number') {
 					throw new Error(
 						`Cannot use operation 'less_than' on data at path ${this.data_path}. Data is not a number.`
 					);
 				}
 
 				const numericValueLess = this.value as number;
-				result = dataValue < numericValueLess;
+				result = inputData < numericValueLess;
 				break;
 			default:
 				throw new Error(`Unknown operation type ${this.operation}`);

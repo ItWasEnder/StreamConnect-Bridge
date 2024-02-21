@@ -1,6 +1,6 @@
 import WebSocket, { RawData } from 'ws';
 import { INTERNAL_EVENTS } from '../../events/EventsHandler';
-import { STATUS, Service } from './Server';
+import { STATUS, Service } from './Service';
 import { sleep } from '../../utils/Random';
 
 export abstract class WebSocketInst extends Service {

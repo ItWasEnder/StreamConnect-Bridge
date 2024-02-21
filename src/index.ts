@@ -3,7 +3,7 @@ import * as Text from './utils/Text';
 import { ConnectionManager } from './connections/ConnectionManager';
 import { EMITTER, INTERNAL_EVENTS, disableNewLine } from './events/EventsHandler';
 import { ConnectionConfig } from './connections/backend/Connection';
-import { STATUS, Service } from './connections/backend/Server';
+import { STATUS, Service } from './connections/backend/Service';
 import { sleep } from './utils/Random';
 import chalk from 'chalk';
 import { TriggerManager } from './triggers/TriggerManager';
@@ -19,6 +19,7 @@ import { ProviderManager } from './providers/ProviderManager';
 import { TikfinityWebServerHandler } from './handlers/TikfinityHandler';
 import { TITSWebSocketHandler } from './handlers/TITSHandler';
 import { POGHandler } from './handlers/POGHandler';
+import { Result } from './utils/Result';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -248,17 +249,8 @@ function printMainMenu() {
 }
 
 function loadConfigs() {
-	try {
-		// Load connection configs
-		CONNECTION_MANAGER.load();
-		TRIGGER_MANAGER.load();
-		EMITTER.emit(INTERNAL_EVENTS.GOOD, { data: { message: 'Configurations loaded...' } });
-	} catch (error) {
-		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: 'Error occured trying to load connections...' }
-		});
-		console.error(error);
-	}
+	printResult(CONNECTION_MANAGER.load());
+	printResult(TRIGGER_MANAGER.load());
 }
 
 function setupHandlers() {
@@ -358,4 +350,16 @@ function setupFileWatcher() {
 	FILE_MANAGER.onChange('storage/modules.json', (_p) => {
 		// TODO: Handle reloading modules
 	});
+}
+
+function printResult<T>(result: Result<T>) {
+	if (result.isSuccess) {
+		EMITTER.emit(INTERNAL_EVENTS.GOOD, {
+			data: { message: result.message }
+		});
+	} else {
+		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+			data: { message: result.message }
+		});
+	}
 }

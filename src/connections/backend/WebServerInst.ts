@@ -1,6 +1,6 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
-import { STATUS, Service } from './Server';
+import { STATUS, Service } from './Service';
 import { INTERNAL_EVENTS } from '../../events/EventsHandler';
 import bodyParser from 'body-parser';
 import http from 'http';

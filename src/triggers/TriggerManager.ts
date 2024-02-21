@@ -35,14 +35,14 @@ export class TriggerManager extends Emitting {
 		});
 	}
 
-	load() {
-		this.loadTriggers(this.fileManager.getFullPath(TriggerManager.TRIGGERS_PATH));
+	load(): Result<void> {
+		return this.loadTriggers(this.fileManager.getFullPath(TriggerManager.TRIGGERS_PATH));
 	}
 
 	/**
 	 * This method saves the triggers to the triggers file
 	 */
-	save() {
+	save(): void {
 		const triggers = this.getTriggers();
 		const data = JSON.stringify(triggers, null, 2);
 		this.fileManager.saveFile(TriggerManager.TRIGGERS_PATH, data);
@@ -102,9 +102,11 @@ export class TriggerManager extends Emitting {
 		}
 	}
 
-	handleEvent(eventName: string, payload: Payload): void {
+	handleEvent(eventName: string, payload: Payload): Result<Result<Trigger>[]> {
 		const triggers = this.getEventTriggers(eventName);
 		const eventData = payload.data;
+
+		const activatedTriggers: Result<Trigger>[] = [];
 
 		for (const trigger of triggers) {
 			// Check if the trigger's conditions are met
@@ -115,7 +117,10 @@ export class TriggerManager extends Emitting {
 
 			// Failed to find matching event in trigger @@@ technically an error but doesn't matter
 			if (!__results || __results.length === 0) {
-				return;
+				return Result.fail(
+					`TriggerManager >> Failed to find matching events in trigger`,
+					activatedTriggers
+				);
 			}
 
 			const triggerEvent: EventMapping = __results[0];
@@ -125,35 +130,42 @@ export class TriggerManager extends Emitting {
 
 			// check if the trigger is on cooldown
 			if (trigger.cooldown > 0 && Date.now() - trigger.lastExecuted < trigger.cooldown) {
+				activatedTriggers.push(Result.fail(`Trigger on cooldown`, trigger));
 				continue;
 			}
 
-			// If the conditions are met, emit the actions
-			if (conditionsMet) {
-				for (const __request of trigger.actions) {
-					const __baseEvent: BaseEvent = eventData;
-					const request: InternalRequest = JSON.parse(JSON.stringify(__request));
-					const nickname: string | undefined = eventData?.nickname;
+			// If the conditions are not met, skip the trigger
+			if (!conditionsMet) {
+				activatedTriggers.push(Result.fail(`Conditions not met`, trigger));
+				continue;
+			}
 
-					trigger.lastExecuted = Date.now();
+			for (const __request of trigger.actions) {
+				const __baseEvent: BaseEvent = eventData;
+				const request: InternalRequest = JSON.parse(JSON.stringify(__request));
+				const nickname: string | undefined = eventData?.nickname;
 
-					// Emit the action request
-					if (trigger.log) {
-						this.emit(INTERNAL_EVENTS.INFO, {
-							data: {
-								message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} from '${__baseEvent.event}' event`
-							}
-						});
-					}
+				trigger.lastExecuted = Date.now();
 
-					// submit event to the backend
-					request.requestId = crypto.randomUUID();
-					this.injectData(request, eventData);
-
-					this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
+				// Emit the action request
+				if (trigger.log) {
+					this.emit(INTERNAL_EVENTS.INFO, {
+						data: {
+							message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} from '${__baseEvent.event}' event`
+						}
+					});
 				}
+
+				// submit event to the backend
+				request.requestId = crypto.randomUUID();
+				this.injectData(request, eventData);
+
+				this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
+				activatedTriggers.push(Result.pass(`Trigger executed`, trigger));
 			}
 		}
+
+		return Result.pass(`Handled event ${eventName}`, activatedTriggers);
 	}
 
 	/**
@@ -176,7 +188,7 @@ export class TriggerManager extends Emitting {
 		return triggers;
 	}
 
-	injectData(request: InternalRequest, data: any) {
+	injectData(request: InternalRequest, data: any): void {
 		for (const key in request.context) {
 			const value = request.context[key];
 
@@ -195,7 +207,7 @@ export class TriggerManager extends Emitting {
 	 * Load triggers from a file
 	 * @param filePath full path to the triggers file
 	 */
-	private loadTriggers(filePath: string) {
+	private loadTriggers(filePath: string): Result<void> {
 		try {
 			const rawData = fs.readFileSync(filePath, 'utf-8');
 			const triggers = JSON.parse(rawData);
@@ -204,12 +216,12 @@ export class TriggerManager extends Emitting {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
 				this.addTrigger(trigger);
 			}
+
+			return Result.pass(`TriggerManager >> Loaded ${triggers.length} triggers from file`);
 		} catch (error) {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `TriggerManager >> Error occured trying to load triggers from file @@@ ${error}`
-				}
-			});
+			return Result.fail(
+				`TriggerManager >> Error occured trying to load triggers from file @@@ ${error}`
+			);
 		}
 	}
 }

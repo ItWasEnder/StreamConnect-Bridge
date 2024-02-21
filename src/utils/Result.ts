@@ -43,12 +43,16 @@ export class Result<T> {
 	}
 
 	/**
-	 * Creates a Result object from a boolean expression and a message.
-	 * @param exp The boolean expression.
-	 * @param message The message associated with the result.
-	 * @returns A new Result instance representing the outcome of the expression.
+	 * Wraps a promise and returns a Result object.
+	 * @param promise - The promise to be wrapped.
+	 * @returns A promise that resolves to a Result object.
 	 */
-	static from(exp: boolean, message: string): Result<boolean> {
-		return exp ? Result.pass(message, exp) : Result.fail(message, exp);
+	static async promise<T>(promise: Promise<T>): Promise<Result<T>> {
+		try {
+			const value = await promise;
+			return Result.pass('Operation succeeded', value);
+		} catch (error) {
+			return Result.fail(error.message);
+		}
 	}
 }

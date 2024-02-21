@@ -1,8 +1,9 @@
 import { INTERNAL_EVENTS } from '../events/EventsHandler';
 import { Emitting } from '../events/backend/Emmiting';
 import { FileManager } from '../utils/FileManager';
+import { Result } from '../utils/Result';
 import { ConnectionConfig } from './backend/Connection';
-import { Service } from './backend/Server';
+import { Service } from './backend/Service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -31,11 +32,11 @@ export class ConnectionManager extends Emitting {
 		});
 	}
 
-	load(): void {
-		this.loadConfigs(this.fileManager.getFullPath(ConnectionManager.MODULES_PATH));
+	load(): Result<void> {
+		return this.loadConfigs(this.fileManager.getFullPath(ConnectionManager.MODULES_PATH));
 	}
 
-	loadConfigs(filePath: string): void {
+	loadConfigs(filePath: string): Result<void> {
 		try {
 			const rawData = fs.readFileSync(filePath, 'utf-8');
 			const config = JSON.parse(rawData);
@@ -63,12 +64,12 @@ export class ConnectionManager extends Emitting {
 					this.addConfig(newConnection.id, newConnection);
 				}
 			}
+
+			return Result.pass(`ConnectionManager >> Loaded ${config.length} module infos from file.`);
 		} catch (error) {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `ConnectionManager >> Error occured trying to load triggers from file @@@ ${error}`
-				}
-			});
+			return Result.fail(
+				`ConnectionManager >> Error occured trying to load triggers from file @@@ ${error}`
+			);
 		}
 	}
 
