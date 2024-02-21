@@ -25,7 +25,7 @@ export interface TiktokEvent extends BaseEvent {
 	followRole: FOLLOW_STATUS;
 	isSubscriber: boolean;
 	isModerator: boolean;
-	data?: TiktokGift | TiktokChat | TiktokSubscribe;
+	data?: TiktokGift | TiktokChat | TiktokSubscribe | Record<string, any>;
 }
 
 export interface TiktokGift {

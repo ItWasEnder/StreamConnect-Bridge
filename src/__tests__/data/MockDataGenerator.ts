@@ -60,16 +60,25 @@ export function createTrigger(options?: {
 	return trigger;
 }
 
-export function createTiktokEvent(): TiktokEvent {
+export function createTiktokEvent(options?: {
+	event?: string;
+	isSub?: boolean;
+	isMod?: boolean;
+	followRole?: FOLLOW_STATUS;
+	data?: string;
+}): TiktokEvent {
 	const event: TiktokEvent = {
-		event: randomTiktokEventType(),
+		event: options?.event || randomTiktokEventType(),
 		username: faker.internet.userName(),
 		nickname: faker.internet.displayName(),
 		userId: faker.number.bigInt().toString(),
 		followRole: randomTiktokFollowStatus(),
 		isSubscriber: faker.datatype.boolean(),
 		isModerator: faker.datatype.boolean(),
-		timestamp: faker.date.recent().getMilliseconds()
+		timestamp: Date.now(),
+		data: {
+			test: options.data
+		}
 	};
 
 	return event;

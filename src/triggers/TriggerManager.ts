@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Condition } from './backend/Condition';
 import { InternalRequest } from '../providers/backend/InternalRequest';
+import { Result } from '../utils/Result';
 
 export interface BaseEvent {
 	event: string;
@@ -53,6 +54,12 @@ export class TriggerManager extends Emitting {
 	 */
 	addTrigger(trigger: Trigger): void {
 		this.triggers.set(trigger.id, trigger);
+
+		if (trigger.enabled) {
+			for (const event of trigger.events) {
+				this.getEventTriggers(event.event).push(trigger);
+			}
+		}
 	}
 
 	/**
@@ -61,6 +68,17 @@ export class TriggerManager extends Emitting {
 	 * @returns true if the trigger was removed, false otherwise
 	 */
 	removeTrigger(id: string): boolean {
+		if (this.triggers.has(id)) {
+			const trigger = this.triggers.get(id)!;
+			for (const event of trigger.events) {
+				const eventTriggers = this.getEventTriggers(event.event);
+				const index = eventTriggers.findIndex((t) => t.id === trigger.id);
+				if (index !== -1) {
+					eventTriggers.splice(index, 1);
+				}
+			}
+		}
+
 		return this.triggers.delete(id);
 	}
 
@@ -84,55 +102,7 @@ export class TriggerManager extends Emitting {
 		}
 	}
 
-	/**
-	 * Load triggers from a file
-	 * @param filePath full path to the triggers file
-	 */
-	private loadTriggers(filePath: string) {
-		try {
-			const rawData = fs.readFileSync(filePath, 'utf-8');
-			const triggers = JSON.parse(rawData);
-
-			for (const _trigger of triggers) {
-				const trigger: Trigger = Trigger.fromObject(_trigger);
-				this.addTrigger(trigger);
-
-				if (trigger.enabled) {
-					// Add the trigger to the event index
-					for (const event of trigger.events) {
-						this.getEventTriggers(event.event).push(trigger);
-					}
-				}
-			}
-		} catch (error) {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `TriggerManager >> Error occured trying to load triggers from file @@@ ${error}`
-				}
-			});
-		}
-	}
-
-	/**
-	 * This will return a mutable array of triggers for the given event
-	 * @param eventName the event name to get triggers for
-	 * @returns an array of triggers for the given event
-	 */
-	private getEventTriggers(eventName: string): Trigger[] {
-		let triggers: Trigger[] = this.eventIndex.get(eventName);
-
-		// If new event, create a new array for it & setup listener
-		if (!triggers) {
-			this.on(eventName, (data) => {
-				this.handleEvent(eventName, data);
-			});
-			triggers = this.eventIndex.set(eventName, []).get(eventName)!;
-		}
-
-		return triggers;
-	}
-
-	private handleEvent(eventName: string, payload: Payload): void {
+	handleEvent(eventName: string, payload: Payload): void {
 		const triggers = this.getEventTriggers(eventName);
 		const eventData = payload.data;
 
@@ -145,7 +115,6 @@ export class TriggerManager extends Emitting {
 
 			// Failed to find matching event in trigger @@@ technically an error but doesn't matter
 			if (!__results || __results.length === 0) {
-				console.log(`Failed to find matching event in trigger ${trigger.name}`);
 				return;
 			}
 
@@ -187,7 +156,27 @@ export class TriggerManager extends Emitting {
 		}
 	}
 
-	private injectData(request: InternalRequest, data: any) {
+	/**
+	 * This will return a mutable array of triggers for the given event
+	 * @param eventName the event name to get triggers for
+	 * @returns an array of triggers for the given event
+	 */
+	getEventTriggers(eventName: string): Trigger[] {
+		let triggers: Trigger[] = this.eventIndex.get(eventName);
+
+		// If new event, create a new array for it & setup listener
+		if (!triggers) {
+			this.on(eventName, (data) => {
+				this.handleEvent(eventName, data);
+			});
+			// reassign triggers to the new array
+			triggers = this.eventIndex.set(eventName, []).get(eventName)!;
+		}
+
+		return triggers;
+	}
+
+	injectData(request: InternalRequest, data: any) {
 		for (const key in request.context) {
 			const value = request.context[key];
 
@@ -199,6 +188,28 @@ export class TriggerManager extends Emitting {
 					request.context[key] = result[0];
 				}
 			}
+		}
+	}
+
+	/**
+	 * Load triggers from a file
+	 * @param filePath full path to the triggers file
+	 */
+	private loadTriggers(filePath: string) {
+		try {
+			const rawData = fs.readFileSync(filePath, 'utf-8');
+			const triggers = JSON.parse(rawData);
+
+			for (const _trigger of triggers) {
+				const trigger: Trigger = Trigger.fromObject(_trigger);
+				this.addTrigger(trigger);
+			}
+		} catch (error) {
+			this.emit(INTERNAL_EVENTS.ERROR, {
+				data: {
+					message: `TriggerManager >> Error occured trying to load triggers from file @@@ ${error}`
+				}
+			});
 		}
 	}
 }
