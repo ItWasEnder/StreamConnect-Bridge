@@ -57,8 +57,8 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', () => {
 	++shutdownAttempts;
 
-	if (shutdownAttempts >= 2) {
-		console.log(chalk['red'].underline('Proccess failed to shutdown peacefully.'));
+	if (shutdownAttempts > 1) {
+		console.log(chalk[Text.COLORS.RED].underline('Proccess failed to shutdown peacefully.'));
 		process.exit(0);
 	} else {
 		shutdown();
@@ -66,7 +66,6 @@ process.on('SIGINT', () => {
 });
 
 // Run the program
-// console.clear();
 loadConfigs();
 
 // Setup handlers
