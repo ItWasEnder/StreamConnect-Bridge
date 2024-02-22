@@ -74,7 +74,6 @@ setupHandlers();
 
 // Wait for inits
 printMainMenu();
-setupFileWatcher();
 
 // CLI
 if (!backend) {
@@ -226,17 +225,6 @@ async function handleCommand(action: string) {
 	}
 }
 
-function shutdown() {
-	++shutdownAttempts;
-	exit = true;
-
-	CONNECTION_MANAGER.close();
-	FILE_MANAGER.close();
-
-	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
-	process.exit(0);
-}
-
 function printMainMenu() {
 	console.log(
 		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See commands below. (${process.pid})`
@@ -346,16 +334,6 @@ function setupTitsService() {
 	}
 }
 
-function setupFileWatcher() {
-	FILE_MANAGER.onChange('storage/modules.json', (_p) => {
-		// TODO: Handle reloading modules
-	});
-
-	FILE_MANAGER.onChange('storage/modules.json', (_p) => {
-		// TODO: Handle reloading modules
-	});
-}
-
 function printResult<T>(result: Result<T>) {
 	if (result.isSuccess) {
 		EMITTER.emit(INTERNAL_EVENTS.GOOD, {
@@ -366,4 +344,15 @@ function printResult<T>(result: Result<T>) {
 			data: { message: result.message }
 		});
 	}
+}
+
+function shutdown() {
+	++shutdownAttempts;
+	exit = true;
+
+	CONNECTION_MANAGER.close();
+	FILE_MANAGER.close();
+
+	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
+	// process.exit(0);
 }
