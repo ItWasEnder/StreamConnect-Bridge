@@ -5,7 +5,7 @@
 		"name": "Tikfinity - Webserver",
 		"description": "This will host an api to allow tikfinity app interations",
 		"type": "webserver",
-		"connection": {
+		"info": {
 			"host": "localhost",
 			"port": 8832,
 			"apiKey": ""
@@ -17,7 +17,7 @@
 		"name": "T.I.T.S - Websocket",
 		"description": "This will connect to TITS to control items and triggers",
 		"type": "websocket",
-		"connection": {
+		"info": {
 			"url": "ws://127.0.0.1:42069/websocket"
 		}
 	},
@@ -27,7 +27,7 @@
 		"name": "TikTok - Websocket",
 		"description": "This will connect to tiktok session chat and allow triggers to integrate with StreamConnect",
 		"type": "custom",
-		"connection": {
+		"info": {
 			"username": "itwasender"
 		}
 	},
@@ -36,7 +36,7 @@
 		"enabled": true,
 		"name": "VTS-POG - Service",
 		"description": "This handles the local requests in order to make TTS happen",
-		"connection": {
+		"info": {
 			"host": "localhost",
 			"port": 3800,
 			"apiKey": ""

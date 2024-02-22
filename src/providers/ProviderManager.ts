@@ -1,34 +1,27 @@
-import { INTERNAL_EVENTS } from '../events/EventsHandler';
-import { Emitting } from '../events/backend/Emmiting';
 import { FileManager } from '../utils/FileManager';
+import { Result } from '../utils/Result';
 import { ActionProvider, ActionData } from './backend/ActionProvider';
 
 /**
  * This class is a manager for ActionProviders which store actions and categories that can be used to executed requests on 3rd-party applications
  */
-export class ProviderManager extends Emitting {
+export class ProviderManager {
 	static PROVIDER_DATA_PATH: string = 'storage/provider_data';
 	private providerMap: Map<string, ActionProvider<any>> = new Map(); // <service_id, provider>
 
-	constructor(private fileManager: FileManager) {
-		super();
-	}
+	constructor(private fileManager: FileManager) {}
 
 	/**
 	 * Registers a provider with the manager
 	 * @param provider the provider to register
 	 */
-	registerProvider<T extends ActionData>(provider: ActionProvider<T>) {
+	registerProvider<T extends ActionData>(provider: ActionProvider<T>): Result<void> {
 		if (this.providerMap.has(provider.providerId)) {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `TriggerManager >> Provider with id ${provider.providerId} already exists`
-				}
-			});
-			return;
+			return Result.fail(`Provider with id ${provider.providerId} already exists`);
 		}
 
 		this.providerMap.set(provider.providerId, provider);
+		return Result.pass('Provider registered');
 	}
 
 	/**

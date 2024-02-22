@@ -17,13 +17,6 @@ export class ConnectionManager extends Emitting {
 		this.configs = new Map();
 		this.managedInstances = new Map();
 
-		// Setup emitters
-		this.on(INTERNAL_EVENTS.SHUTDOWN, () => {
-			for (const instance of this.getInstances()) {
-				instance.stop();
-			}
-		});
-
 		// TODO: Create the modules file if it doesn't exist with standard data
 		fileManager.createFileIfNotExists(ConnectionManager.MODULES_PATH, '[]');
 
@@ -49,7 +42,7 @@ export class ConnectionManager extends Emitting {
 					module.name,
 					module.description,
 					module.type,
-					module.connection
+					module.info
 				);
 
 				if (this.configs.has(newConnection.id)) {
@@ -117,5 +110,11 @@ export class ConnectionManager extends Emitting {
 
 	getInstances(): Service[] {
 		return Array.from(this.managedInstances.values());
+	}
+
+	close(): void {
+		for (const instance of this.getInstances()) {
+			instance.stop();
+		}
 	}
 }

@@ -1,10 +1,11 @@
 import { CALLERS, InternalRequest } from '../../providers/backend/InternalRequest';
 import { EventMapping, Trigger } from '../../triggers/backend/Trigger';
 import { FOLLOW_STATUS, TIKTOK_EVENTS, TiktokEvent } from '../../handlers/TikTokHandler';
-import { TITS_ACTIONS } from '../../handlers/TITSHandler';
+import { TITSActionData, TITS_ACTIONS } from '../../handlers/TITSHandler';
 import { faker } from '@faker-js/faker';
 import crypto from 'crypto';
 import { Condition, OperationType } from '../../triggers/backend/Condition';
+import { ActionData, ActionProvider } from '../../providers/backend/ActionProvider';
 
 export function createTriggers(amount: number): Trigger[] {
 	const triggers = [];
@@ -35,18 +36,7 @@ export function createTrigger(options?: {
 		} as EventMapping
 	];
 
-	const __actions: InternalRequest[] = options?.actions || [
-		{
-			caller: randomEventCaller(),
-			providerId: 'tits',
-			providerKey: {
-				categoryId: faker.helpers.arrayElement(Object.values(TITS_ACTIONS)),
-				actions: [crypto.randomUUID()]
-			},
-			bypass_cooldown: false,
-			context: { count: 1, delay: 0.8 }
-		} as InternalRequest
-	];
+	const __actions: InternalRequest[] = options?.actions || [createInternalRequest()];
 
 	const trigger: Trigger = Trigger.fromObject({
 		id: crypto.randomUUID(),
@@ -59,6 +49,40 @@ export function createTrigger(options?: {
 	});
 
 	return trigger;
+}
+
+export function createInternalRequest<T extends ActionData>(
+	options?: ActionProvider<T> | { provider?: ActionProvider<T> }
+): InternalRequest {
+	const provider = options instanceof ActionProvider ? options : options?.provider;
+
+	if (provider) {
+		const category = faker.helpers.arrayElement(provider.getCategories());
+		const map = provider.getActionMap(category);
+		const action = faker.helpers.arrayElement(map.getActions());
+
+		return {
+			caller: randomEventCaller(),
+			providerId: provider.providerId,
+			providerKey: {
+				categoryId: category,
+				actions: [action.id]
+			},
+			bypass_cooldown: false,
+			context: {}
+		} as InternalRequest;
+	} else {
+		return {
+			caller: randomEventCaller(),
+			providerId: 'tits',
+			providerKey: {
+				categoryId: randomTITSActionType(),
+				actions: [crypto.randomUUID()]
+			},
+			bypass_cooldown: false,
+			context: { count: 1, delay: 0.8 }
+		} as InternalRequest;
+	}
 }
 
 export function createTiktokEvent(options?: {
@@ -85,6 +109,10 @@ export function createTiktokEvent(options?: {
 	return event;
 }
 
+export function randomTITSActionType(): string {
+	return faker.helpers.arrayElement(Object.values(TITS_ACTIONS));
+}
+
 export function randomTiktokEventType(): string {
 	return faker.helpers.arrayElement(Object.values(TIKTOK_EVENTS));
 }
@@ -96,6 +124,7 @@ export function randomEventCaller(): CALLERS {
 export function randomTiktokFollowStatus(): FOLLOW_STATUS {
 	return faker.helpers.arrayElement(Object.values(FOLLOW_STATUS) as FOLLOW_STATUS[]);
 }
+
 export function createCondition(options?: {
 	path?: string;
 	negate?: boolean;
@@ -109,4 +138,14 @@ export function createCondition(options?: {
 		operation: options?.operation || OperationType.EQUALS,
 		value: options?.value || 'test'
 	});
+}
+
+export function generateTITSActionDataSet(): [string, TITSActionData] {
+	const action: TITSActionData = {
+		id: crypto.randomUUID(),
+		name: faker.word.words(3),
+		cooldown: faker.number.int({ min: 1, max: 10 }) * 1000
+	};
+
+	return [randomTITSActionType(), action];
 }

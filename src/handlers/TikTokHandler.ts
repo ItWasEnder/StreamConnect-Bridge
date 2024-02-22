@@ -46,7 +46,6 @@ export interface TiktokSubscribe {
 	subscribingStatus: number;
 }
 
-// TODO fix issue with proccess hanging when on shutdown
 export class TikTokHandler extends Service {
 	private config: ConnectionConfig;
 	private connection: WebcastPushConnection;

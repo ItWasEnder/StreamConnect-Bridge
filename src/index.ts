@@ -105,7 +105,7 @@ async function handleCommand(action: string) {
 			printMainMenu();
 			break;
 		case 'q':
-			await shutdown();
+			shutdown();
 			break;
 		case 'c':
 			console.clear();
@@ -226,14 +226,14 @@ async function handleCommand(action: string) {
 	}
 }
 
-async function shutdown() {
+function shutdown() {
 	++shutdownAttempts;
 	exit = true;
 
-	EMITTER.emit(INTERNAL_EVENTS.SHUTDOWN);
-	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
+	CONNECTION_MANAGER.close();
+	FILE_MANAGER.close();
 
-	await sleep(3000);
+	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
 	process.exit(0);
 }
 
@@ -336,7 +336,11 @@ function setupTitsService() {
 
 		// Register this service
 		CONNECTION_MANAGER.addInstance(config.id, titsHandler);
-		PROVIDER_MANAGER.registerProvider(titsHandler.provider);
+		const result = PROVIDER_MANAGER.registerProvider(titsHandler.provider);
+
+		if (!result.isSuccess) {
+			printResult(result);
+		}
 
 		titsHandler.start();
 	}

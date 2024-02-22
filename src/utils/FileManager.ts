@@ -37,8 +37,8 @@ export class FileManager extends Emitting {
 	/**
 	 * Stop all file watchers
 	 */
-	stopWatchers() {
-		for (const watcher of this.watcherMap.values()) {
+	close() {
+		for (const [_, watcher] of this.watcherMap.entries()) {
 			watcher.close();
 		}
 	}

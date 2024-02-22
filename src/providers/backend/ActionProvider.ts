@@ -35,7 +35,7 @@ export class ActionMap<T extends ActionData> {
 		// Update the action if it already exists
 		if (this.actionMap.has(action.id)) {
 			const __action = this.actionMap.get(action.id);
-			
+
 			const __updated = {
 				...__action,
 				...action
@@ -88,6 +88,20 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 		private _loadActions: () => Promise<[string, T[]][]>
 	) {
 		super();
+	}
+
+	/**
+	 * This method returns the number of actions in the provider
+	 * @returns the number of actions in the provider
+	 */
+	actionCount() {
+		let count = 0;
+
+		for (const [_, actionMap] of this.categoryMap) {
+			count += actionMap.size();
+		}
+
+		return count;
 	}
 
 	/**

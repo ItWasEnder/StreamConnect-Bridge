@@ -1,11 +1,13 @@
 import { ConnectionConfig, WebSocketInfo } from '../connections/backend/Connection';
 import { WebSocketInst } from '../connections/backend/WebSocketInst';
-import { INTERNAL_EVENTS } from '../events/EventsHandler';
+import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler';
 import { RawData } from 'ws';
 import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider';
 import { OptionsError } from '../utils/OptionsError';
 import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest';
 import crypto from 'crypto';
+import { Result } from '../utils/Result';
+import { Payload } from '../events/backend/Emitter';
 
 export const TITS_ACTIONS = {
 	THROW_ITEMS: 'tits-throw-items',
@@ -66,14 +68,6 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			const [items, triggers] = await promise;
 
 			return [items, triggers];
-		});
-
-		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, (payload) => {
-			const __request: InternalRequest = payload.data;
-
-			if (__request.providerId === this.provider.providerId) {
-				this.executeRequest(__request);
-			}
 		});
 
 		// Setup emmiters & listeners
@@ -180,26 +174,21 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		});
 	}
 
-	executeRequest(request: InternalRequest) {
+	executeRequest(request: InternalRequest): Result<string> {
 		const { caller, requestId, providerKey, bypass_cooldown, context } = request;
 		const __info = `(requestId: ${requestId}, caller: ${caller})`;
 
 		if (!providerKey) {
-			this.emit(INTERNAL_EVENTS.NOTIF, {
-				data: { message: `TITSHandler >> Missing providerKey in request ${__info}` }
-			});
-			return;
+			return Result.fail(`Missing providerKey in request ${__info}`, INTERNAL_EVENTS.ERROR);
 		}
 
 		const { categoryId, actions } = providerKey;
 
 		if (!this.provider.has(categoryId)) {
-			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: {
-					message: `TITSHandler >> Unable to find category based on input of '${JSON.stringify(providerKey)}' ${__info}`
-				}
-			});
-			return;
+			return Result.fail(
+				`Unable to find category based on input of '${JSON.stringify(providerKey)}' ${__info}`,
+				INTERNAL_EVENTS.ERROR
+			);
 		}
 
 		const actionInfo: string = `[${actions.join(', ')}]`;
@@ -216,20 +205,11 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		});
 
 		if (!bypass_cooldown && hasCooldown) {
-			this.emit(INTERNAL_EVENTS.INFO, {
-				data: {
-					message: `TITSHandler >> Action not executed, there is a cooldown on one or all of the actions. ${__info}`
-				}
-			});
-			return;
+			return Result.fail(
+				`Action not executed, there is a cooldown on one or all of the actions. ${__info}`,
+				INTERNAL_EVENTS.INFO
+			);
 		}
-
-		// TODO: Verbose Log Event (to file or console with debug flag)
-		this.emit(INTERNAL_EVENTS.INFO, {
-			data: {
-				message: `Action '${categoryId}' executed with actions ${actionInfo} ${__info}`
-			}
-		});
 
 		// Update lastTriggered for all actions
 		for (const __action of actionDatas) {
@@ -239,11 +219,11 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		switch (categoryId) {
 			case TITS_ACTIONS.ACTIVATE_TRIGGER:
 				for (const __action of actions) {
-					this.handleTriggerRequest(__action);
+					this.handleTriggerRequest(__action, requestId);
 				}
 				break;
 			case TITS_ACTIONS.THROW_ITEMS:
-				this.handleThrowRequest(actions, context?.count, context?.delay);
+				this.handleThrowRequest(actions, context?.count, context?.delay, requestId);
 				break;
 			default:
 				this.emit(INTERNAL_EVENTS.ERROR, {
@@ -251,6 +231,12 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				});
 				return;
 		}
+
+		// TODO: Verbose Log Event (to file or console with debug flag)
+		return Result.pass(
+			`Action '${categoryId}' executed with actions ${actionInfo} ${__info}`,
+			INTERNAL_EVENTS.INFO
+		);
 	}
 
 	/** private methods */
@@ -282,6 +268,15 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	}
 
 	private setup(): void {
+		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, (payload) => {
+			const __request: InternalRequest = payload.data;
+
+			if (__request.providerId === this.provider.providerId) {
+				const result = this.executeRequest(__request);
+				EMITTER.emit(result.value, { data: result.message });
+			}
+		});
+
 		this.setCallback(RESPONSE_TYPES.ERROR, (message: TITSMessage) => {
 			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
