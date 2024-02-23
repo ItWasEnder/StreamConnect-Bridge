@@ -1,4 +1,4 @@
-import { CALLERS, InternalRequest } from '../../providers/backend/InternalRequest';
+import { CALLERS, InternalRequest, ProviderKey } from '../../providers/backend/InternalRequest';
 import { EventMapping, Trigger } from '../../triggers/backend/Trigger';
 import { FOLLOW_STATUS, TIKTOK_EVENTS, TiktokEvent } from '../../handlers/TikTokHandler';
 import { TITSActionData, TITS_ACTIONS } from '../../handlers/TITSHandler';
@@ -52,22 +52,25 @@ export function createTrigger(options?: {
 }
 
 export function createInternalRequest<T extends ActionData>(
-	options?: ActionProvider<T> | { provider?: ActionProvider<T> }
+	options?: ActionProvider<T> | { provider?: ActionProvider<T>; providerKey?: ProviderKey }
 ): InternalRequest {
 	const provider = options instanceof ActionProvider ? options : options?.provider;
+	const ops = options instanceof ActionProvider ? undefined : options;
 
 	if (provider) {
-		const category = faker.helpers.arrayElement(provider.getCategories());
-		const map = provider.getActionMap(category);
-		const action = faker.helpers.arrayElement(map.getActions());
+		const pk = ops
+			? ops.providerKey
+			: { categoryId: faker.helpers.arrayElement(provider.getCategories()), actions: [] };
+		const map = provider.getActionMap(pk.categoryId);
+
+		if (pk.actions.length === 0) {
+			pk.actions.push(faker.helpers.arrayElement(map.getActions()).id);
+		}
 
 		return {
 			caller: randomEventCaller(),
 			providerId: provider.providerId,
-			providerKey: {
-				categoryId: category,
-				actions: [action.id]
-			},
+			providerKey: pk,
 			bypass_cooldown: false,
 			context: {}
 		} as InternalRequest;

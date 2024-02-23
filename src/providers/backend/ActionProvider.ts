@@ -181,6 +181,10 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 			.then((actions) => {
 				let count = 0;
 
+				if (!actions || actions.length === 0) {
+					throw new OptionsError('No actions were loaded', { print: true });
+				}
+
 				for (const [categoryId, actionData] of actions) {
 					const actionMap = this.getActionMap(categoryId);
 

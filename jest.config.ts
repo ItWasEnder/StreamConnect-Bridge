@@ -12,6 +12,7 @@ const jestConfig: JestConfigWithTsJest = {
 		'!**/__test__/data/**'
 	],
 	maxConcurrency: 5,
+	maxWorkers: '50%',
 	preset: 'ts-jest',
 	testMatch: ['**/?(*.)+(test).ts'],
 	transformIgnorePatterns: ['node_modules/(?!(ora|chalk|cli-cursor))'],

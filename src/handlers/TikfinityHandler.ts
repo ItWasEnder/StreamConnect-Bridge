@@ -34,6 +34,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 
 	setupRoutes() {
 		this.register('GET', '/api/app/info', (req, res) => {
+			res.status(200);
 			res.json({
 				data: {
 					author: 'ItWasEnder',
@@ -45,6 +46,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 
 		this.register('GET', '/api/features/categories', (req, res) => {
 			const categories: Category[] = this.getCategories();
+			res.status(200);
 			res.json({
 				data: categories
 			});
@@ -54,6 +56,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 			const categoryId: string = req.query.categoryId as string;
 			try {
 				const actions: Action[] = this.getActions(categoryId);
+				res.status(200);
 				res.json({
 					data: actions
 				});
@@ -131,13 +134,14 @@ export class TikfinityWebServerHandler extends WebServerInst {
 			// submit event to the backend
 			this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
 
+			res.status(200);
 			res.json({
 				data: []
 			});
 		});
 	}
 
-	private getCategories(): Category[] {
+	getCategories(): Category[] {
 		const categories: Category[] = [];
 
 		for (const provider of this.providerManager.getProviders()) {
@@ -153,7 +157,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 		return categories;
 	}
 
-	private getActions(categoryId: string): Action[] {
+	getActions(categoryId: string): Action[] {
 		const provider = this.providerManager.lookupProvider(categoryId);
 		const actions: Action[] = [];
 

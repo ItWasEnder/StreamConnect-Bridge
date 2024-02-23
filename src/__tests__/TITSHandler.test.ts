@@ -42,7 +42,7 @@ export class TestTITSWebSocketHandler extends TITSWebSocketHandler {
 	}
 
 	socketSend(payload: object, callback: (err?: Error) => void): void {
-		super.send(payload, callback);
+		// this does nothing
 	}
 }
 
