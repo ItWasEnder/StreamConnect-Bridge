@@ -24,11 +24,11 @@ describe('Condition', () => {
 			data_path: 'test',
 			negate: false,
 			operation: OperationType.CONTAINS,
-			value: 'this test is cool'
+			value: 'test'
 		});
 
-		const result1 = condition.evaluate({ test: 'test' });
-		const result2 = condition.evaluate({ test: 'foo' });
+		const result1 = condition.evaluate({ test: 'this test is cool' });
+		const result2 = condition.evaluate({ test: 'this foo is cool' });
 
 		expect(result1).toBe(true);
 		expect(result2).toBe(false);
@@ -40,14 +40,16 @@ describe('Condition', () => {
 			data_path: 'test',
 			negate: false,
 			operation: OperationType.STARTS_WITH,
-			value: 'this test is cool'
+			value: 'xthis'
 		});
 
-		const result1 = condition.evaluate({ test: 'this' });
-		const result2 = condition.evaluate({ test: 'foo' });
+		const result1 = condition.evaluate({ test: 'this xthis is cool' });
+		const result2 = condition.evaluate({ test: 'foo test is cool' });
+		const result3 = condition.evaluate({ test: 'xthis test is cool' });
 
-		expect(result1).toBe(true);
+		expect(result1).toBe(false);
 		expect(result2).toBe(false);
+		expect(result3).toBe(true);
 	});
 
 	it('should throw an error when using operation type Contains on a non string', () => {
@@ -56,7 +58,7 @@ describe('Condition', () => {
 			data_path: 'test',
 			negate: false,
 			operation: OperationType.CONTAINS,
-			value: 'this test is cool'
+			value: 'test'
 		});
 
 		expect(() => condition.evaluate({ test: 123 })).toThrowError();
@@ -68,7 +70,7 @@ describe('Condition', () => {
 			data_path: 'test',
 			negate: false,
 			operation: OperationType.STARTS_WITH,
-			value: 'this test is cool'
+			value: 'test'
 		});
 
 		expect(() => condition.evaluate({ test: 123 })).toThrowError();

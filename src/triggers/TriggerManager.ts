@@ -31,7 +31,14 @@ export class TriggerManager extends Emitting {
 
 		fileManager.onChange(TriggerManager.TRIGGERS_PATH, (_path) => {
 			this.clearAll();
-			this.loadTriggers(_path);
+
+			const result = this.loadTriggers(_path);
+
+			if (result.isSuccess) {
+				this.emit(INTERNAL_EVENTS.INFO, { data: { message: result.message } });
+			} else {
+				this.emit(INTERNAL_EVENTS.ERROR, { data: { message: result.message } });
+			}
 		});
 	}
 

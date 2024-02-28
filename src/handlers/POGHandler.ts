@@ -25,6 +25,8 @@ export class POGHandler extends Service implements RequestExecuter {
 				return;
 			}
 
+			console.log('POGHandler >> Received request to execute action', __request);
+
 			if ((await this.status()) !== STATUS.ONLINE) {
 				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
 					data: {

@@ -273,7 +273,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 
 			if (__request.providerId === this.provider.providerId) {
 				const result = this.executeRequest(__request);
-				EMITTER.emit(result.value, { data: result.message });
+				EMITTER.emit(result.value, { data: { message: result.message } });
 			}
 		});
 

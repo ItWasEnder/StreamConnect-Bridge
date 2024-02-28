@@ -53,8 +53,7 @@ export class Condition {
 					);
 				}
 
-				const stringValue = this.value as string;
-				result = stringValue.includes(inputData);
+				result = inputData.includes(this.value as string);
 				break;
 			case OperationType.STARTS_WITH:
 				if (typeof inputData !== 'string') {
@@ -63,8 +62,7 @@ export class Condition {
 					);
 				}
 
-				const stringValue_starts = this.value as string;
-				result = stringValue_starts.includes(inputData);
+				result = inputData.startsWith(this.value as string);
 				break;
 			case OperationType.GREATER_THAN:
 				if (typeof inputData !== 'number') {
@@ -73,8 +71,7 @@ export class Condition {
 					);
 				}
 
-				const numericValue = this.value as number;
-				result = inputData > numericValue;
+				result = inputData > (this.value as number);
 				break;
 			case OperationType.LESS_THAN:
 				if (typeof inputData !== 'number') {
@@ -83,8 +80,7 @@ export class Condition {
 					);
 				}
 
-				const numericValueLess = this.value as number;
-				result = inputData < numericValueLess;
+				result = inputData < (this.value as number);
 				break;
 			default:
 				throw new Error(`Unknown operation type ${this.operation}`);
