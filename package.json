@@ -12,7 +12,7 @@
 		"grab_proto": "cross-env sh ./scripts/grab_proto.sh",
 		"format": "prettier --write .",
 		"lint": "eslint . --ext .ts",
-		"test": "cross-env NODE_ENV=test jest -o"
+		"test": "cross-env NODE_ENV=test jest"
 	},
 	"author": "ItWasEnder",
 	"devDependencies": {
