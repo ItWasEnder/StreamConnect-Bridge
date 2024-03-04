@@ -1,8 +1,8 @@
 [
 	{
-		"id": "455e6b47-4e5e-41ff-a86c-a4e12fba10fc",
-		"name": "Throw Cat Command",
-		"cooldown": 0,
+		"id": "584ca855-0236-4b36-ac44-7c1ee92c9bd9",
+		"name": "Wildcard Throw Command",
+		"cooldown": 5000,
 		"log": true,
 		"enabled": true,
 		"events": [
@@ -13,8 +13,8 @@
 						"order": 0,
 						"data_path": "data.comment",
 						"negate": false,
-						"operation": "equals",
-						"value": "!throwcat"
+						"operation": "starts_with",
+						"value": "!throw"
 					}
 				]
 			}
@@ -25,10 +25,11 @@
 				"providerId": "tits",
 				"providerKey": {
 					"categoryId": "tits-throw-items",
-					"actions": ["46e7af46-f7e6-4a33-b91b-5649864e3bf5"]
+					"actions": []
 				},
 				"bypass_cooldown": false,
 				"context": {
+					"tryItem": "$$data.comment",
 					"count": 1,
 					"delay": 0.8
 				}
@@ -38,7 +39,7 @@
 	{
 		"id": "3b17da1b-47f0-458c-a74e-ffd566946807",
 		"name": "Throw Pan Command",
-		"cooldown": 0,
+		"cooldown": 15000,
 		"log": true,
 		"enabled": true,
 		"events": [
@@ -50,7 +51,7 @@
 						"negate": false,
 						"data_path": "data.comment",
 						"operation": "equals",
-						"value": "!throwpan"
+						"value": "!pan"
 					}
 				]
 			}
@@ -65,114 +66,6 @@
 				},
 				"bypass_cooldown": false,
 				"context": {}
-			}
-		]
-	},
-	{
-		"id": "01dd9e0e-4a47-4837-8395-0d580a973466",
-		"name": "Throw Hamburbur Command",
-		"cooldown": 0,
-		"log": true,
-		"enabled": true,
-		"events": [
-			{
-				"event": "tiktok-chat",
-				"conditions": [
-					{
-						"order": 0,
-						"negate": false,
-						"data_path": "data.comment",
-						"operation": "equals",
-						"value": "!throwhamburbur"
-					}
-				]
-			}
-		],
-		"actions": [
-			{
-				"caller": "internal",
-				"providerId": "tits",
-				"providerKey": {
-					"categoryId": "tits-throw-items",
-					"actions": ["d7b5faaf-7f54-4756-8c03-45c9406fe89c"]
-				},
-				"bypass_cooldown": false,
-				"context": {
-					"count": 1,
-					"delay": 0.8
-				}
-			}
-		]
-	},
-	{
-		"id": "556e1803-5290-4a38-b8b6-815aec9ae0e2",
-		"name": "Throw Ham Command",
-		"cooldown": 0,
-		"log": true,
-		"enabled": true,
-		"events": [
-			{
-				"event": "tiktok-chat",
-				"conditions": [
-					{
-						"order": 0,
-						"negate": false,
-						"data_path": "data.comment",
-						"operation": "equals",
-						"value": "!throwham"
-					}
-				]
-			}
-		],
-		"actions": [
-			{
-				"caller": "internal",
-				"providerId": "tits",
-				"providerKey": {
-					"categoryId": "tits-throw-items",
-					"actions": ["3e4f3616-059b-4284-b693-a8f6d6c34ef9"]
-				},
-				"bypass_cooldown": false,
-				"context": {
-					"count": 1,
-					"delay": 0.8
-				}
-			}
-		]
-	},
-	{
-		"id": "2b15b121-f748-4f30-a950-a91edfd3b7dd",
-		"name": "Throw Sword Command",
-		"cooldown": 0,
-		"log": true,
-		"enabled": true,
-		"events": [
-			{
-				"event": "tiktok-chat",
-				"conditions": [
-					{
-						"order": 0,
-						"negate": false,
-						"data_path": "data.comment",
-						"operation": "equals",
-						"value": "!throwsword"
-					}
-				]
-			}
-		],
-		"actions": [
-			{
-				"caller": "internal",
-				"providerId": "tits",
-				"providerKey": {
-					"categoryId": "tits-throw-items",
-					"actions": ["6f7445fc-590c-4e72-aca4-8979de236795"]
-				},
-				"bypass_cooldown": false,
-				"context": {
-					"count": 1,
-					"delay": 0.8
-				}
 			}
 		]
 	},
@@ -237,7 +130,7 @@
 	{
 		"id": "73fc6e04-64cc-47f0-a7c9-879154631f25",
 		"name": "TTS for Tiktok",
-		"cooldown": 5000,
+		"cooldown": 0,
 		"log": true,
 		"enabled": true,
 		"events": [

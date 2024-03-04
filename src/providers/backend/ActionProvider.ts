@@ -1,6 +1,7 @@
 import { INTERNAL_EVENTS } from '../../events/EventsHandler';
 import { Emitting } from '../../events/backend/Emmiting';
 import { OptionsError } from '../../utils/OptionsError';
+import { SortMatchResultType, default as comparison } from 'string-comparison';
 
 export interface ActionData {
 	id: string;
@@ -76,6 +77,41 @@ export class ActionMap<T extends ActionData> {
 	 */
 	getActions(): T[] {
 		return Array.from(this.actionMap.values()) ?? [];
+	}
+
+	/**
+	 * Utility method to find the closest match to the action based on name
+	 * @param name the name of the action
+	 * @param condition boolean supplier to filter the results
+	 * @returns the closest match to the action
+	 */
+	closestMatch(name: string, condition?: (item: T) => boolean): T | undefined {
+		const levenshtein = comparison.levenshtein;
+		const nameArray: T[] = Array.from(this.actionMap.values()).filter((i) => (condition ? condition(i) : true));
+
+		const matches: SortMatchResultType[] = levenshtein.sortMatch(
+			name,
+			nameArray.map((a) => a.name)
+		);
+
+		if (matches.length === 0) {
+			return undefined;
+		}
+
+		if (process.env.NODE_ENV === 'development') {
+			console.log('matches:', matches);
+		}
+
+		const relevantMatches = matches.filter((match) => match.rating <= 0.9 && match.rating > 0.299);
+
+		if (relevantMatches.length === 0) {
+			return undefined;
+		}
+
+		relevantMatches.sort((a, b) => b.rating - a.rating);
+
+		const bestMatch = relevantMatches[0];
+		return this.actionMap.get(nameArray[bestMatch.index].id);
 	}
 }
 

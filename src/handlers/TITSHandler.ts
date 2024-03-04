@@ -7,7 +7,6 @@ import { OptionsError } from '../utils/OptionsError';
 import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest';
 import crypto from 'crypto';
 import { Result } from '../utils/Result';
-import { Payload } from '../events/backend/Emitter';
 
 export const TITS_ACTIONS = {
 	THROW_ITEMS: 'tits-throw-items',
@@ -25,6 +24,7 @@ export interface TITSMessage {
 export interface TITSActionData extends ActionData {
 	cooldown: number;
 	lastTriggered?: number;
+	wildSupport?: boolean;
 }
 
 type PendingRequest = {
@@ -195,7 +195,29 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		// const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
 		// const username: string = context?.username ?? '<<unknown>>';
 		const actionMap: ActionMap<TITSActionData> = this.provider.getActionMap(categoryId);
-		const actionDatas: TITSActionData[] = providerKey.actions.map((id) => actionMap.get(id));
+		const actionDatas: TITSActionData[] = [];
+
+		//providerKey.actions.map((id) => actionMap.get(id))
+
+		if (context['tryItem']) {
+			const action: TITSActionData = actionMap.closestMatch(context['tryItem'], (i) => i.wildSupport === true);
+
+			if (process.env.NODE_ENV === 'development') {
+				console.log('action', action);
+			}
+
+			if (!action) {
+				return Result.fail(
+					`Action not executed, unable to find action based on input of '${context['tryItem']}'`,
+					INTERNAL_EVENTS.INFO
+				);
+			}
+
+			actionDatas.push(action);
+			actions.push(action.id);
+		} else {
+			providerKey.actions.forEach((id) => actionDatas.push(actionMap.get(id)));
+		}
 
 		// check if any of the actions are currently on cooldown
 		const hasCooldown = actionDatas.some((action) => {
@@ -273,7 +295,11 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 
 			if (__request.providerId === this.provider.providerId) {
 				const result = this.executeRequest(__request);
-				EMITTER.emit(result.value, { data: { message: result.message } });
+
+				// only print error execution
+				if (!result.isSuccess) {
+					EMITTER.emit(result.value, { data: { message: result.message } });
+				}
 			}
 		});
 
@@ -345,7 +371,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			actions.push({
 				id: id,
 				name: name,
-				cooldown: 0
+				cooldown: 0,
+				wildSupport: true
 			});
 		}
 

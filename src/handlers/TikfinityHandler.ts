@@ -16,6 +16,21 @@ interface Category {
 	categoryName: string;
 }
 
+enum TRIGGER_TYPE {
+	INVALID,
+	SHARE,
+	COMMAND,
+	GIFT_MIN,
+	GIFT_SPECIFIC,
+	JOIN,
+	LIKES,
+	FOLLOW,
+	SUBSCRIBE,
+	CHAT,
+	EMOTE,
+	FIRST_USER_ACTIVITY
+}
+
 export class TikfinityWebServerHandler extends WebServerInst {
 	constructor(
 		private config: ConnectionConfig,
@@ -123,11 +138,16 @@ export class TikfinityWebServerHandler extends WebServerInst {
 
 			const coinInfo: string = body.context?.coins ? `with ${body.context.coins} coins` : '';
 			const username: string = body.context?.username ?? '<<unknown>>';
+			const nickname: string = body.context?.nickname ?? '';
+			const triggerType: string = body.context?.triggerType
+				? TRIGGER_TYPE[body.context?.triggerType as keyof typeof TRIGGER_TYPE].toString() ??
+					'UNKNOWN'
+				: 'UNKNOWN';
 
 			// Log the action
 			this.emit(INTERNAL_EVENTS.INFO, {
 				data: {
-					message: `Action '${actionNames.join(', ')}' executed by '${username}' ${coinInfo}`
+					message: `Action '${actionNames.join(', ')}' executed by '${username}(${nickname})' from trigger ${triggerType} ${coinInfo}`
 				}
 			});
 

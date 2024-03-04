@@ -154,18 +154,26 @@ export class TriggerManager extends Emitting {
 
 				trigger.lastExecuted = Date.now();
 
+				// Inject data into the request
+				request.requestId = crypto.randomUUID();
+				this.injectData(request, eventData);
+
+				// compile the event info to send in log message
+				let eventInfo = '';
+				if (eventData?.data?.comment) {
+					eventInfo = `with comment '${eventData.data.comment}'`;
+				} else {
+					eventInfo = `from '${__baseEvent.event}'`;
+				}
+
 				// Emit the action request
 				if (trigger.log) {
 					this.emit(INTERNAL_EVENTS.INFO, {
 						data: {
-							message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} from '${__baseEvent.event}' event`
+							message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} ${eventInfo}`
 						}
 					});
 				}
-
-				// submit event to the backend
-				request.requestId = crypto.randomUUID();
-				this.injectData(request, eventData);
 
 				this.emit(INTERNAL_EVENTS.EXECUTE_ACTION, { data: request });
 				activatedTriggers.push(Result.pass(`Trigger executed`, trigger));

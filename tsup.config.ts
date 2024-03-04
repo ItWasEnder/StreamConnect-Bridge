@@ -15,6 +15,7 @@ export default defineConfig({
 		'jsonpath-plus',
 		'tiktok-live-connector',
 		'ws',
-		'chokidar'
+		'chokidar',
+		'string-comparison'
 	]
 });
