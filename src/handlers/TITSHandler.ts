@@ -200,7 +200,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		//providerKey.actions.map((id) => actionMap.get(id))
 
 		if (context['tryItem']) {
-			const action: TITSActionData = actionMap.closestMatch(context['tryItem'], (i) => i.wildSupport === true);
+			const name = (context['tryItem'] as string).replace('!throw ', '');
+			const action: TITSActionData = actionMap.closestMatch(name, (i) => i.wildSupport === true);
 
 			if (process.env.NODE_ENV === 'development') {
 				console.log('action', action);

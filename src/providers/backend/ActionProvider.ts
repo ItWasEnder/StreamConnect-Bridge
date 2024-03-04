@@ -87,31 +87,84 @@ export class ActionMap<T extends ActionData> {
 	 */
 	closestMatch(name: string, condition?: (item: T) => boolean): T | undefined {
 		const levenshtein = comparison.levenshtein;
-		const nameArray: T[] = Array.from(this.actionMap.values()).filter((i) => (condition ? condition(i) : true));
+		const nameArray: T[] = Array.from(this.actionMap.values()).filter((i) =>
+			condition ? condition(i) : true
+		);
 
-		const matches: SortMatchResultType[] = levenshtein.sortMatch(
+		const exactMatch = nameArray.find((a) => a.name === name);
+		if (exactMatch) {
+			return exactMatch;
+		}
+
+		const levMatches: SortMatchResultType[] = levenshtein.sortMatch(
 			name,
 			nameArray.map((a) => a.name)
 		);
 
-		if (matches.length === 0) {
+		if (levMatches.length === 0) {
 			return undefined;
 		}
 
 		if (process.env.NODE_ENV === 'development') {
-			console.log('matches:', matches);
+			console.log('matches:', levMatches);
 		}
 
-		const relevantMatches = matches.filter((match) => match.rating <= 0.9 && match.rating > 0.299);
+		const relevantLevMatches = levMatches.filter(
+			(match) => match.rating <= 0.9 && match.rating > 0.299
+		);
 
-		if (relevantMatches.length === 0) {
+		if (relevantLevMatches.length === 0) {
 			return undefined;
 		}
 
-		relevantMatches.sort((a, b) => b.rating - a.rating);
+		if (process.env.NODE_ENV === 'development') {
+			console.log('relavantLevMatches:', relevantLevMatches);
+		}
 
-		const bestMatch = relevantMatches[0];
-		return this.actionMap.get(nameArray[bestMatch.index].id);
+		// do not use secondary comparison if there is only one match
+		if (relevantLevMatches.length === 1) {
+			return nameArray[relevantLevMatches[0].index];
+		}
+
+		const jaroWinkler = comparison.jaroWinkler;
+		const jwMatches: SortMatchResultType[] = jaroWinkler.sortMatch(
+			name,
+			relevantLevMatches.map((a) => nameArray[a.index].name)
+		);
+
+		if (process.env.NODE_ENV === 'development') {
+			console.log('jwMatches:', jwMatches);
+		}
+
+		jwMatches.sort((a, b) => b.rating - a.rating);
+		const maxRating = Math.max(...jwMatches.map((match) => match.rating));
+
+		const bestMatches = jwMatches.filter((match) => match.rating === maxRating);
+
+		if (process.env.NODE_ENV === 'development') {
+			console.log('bestMatches:', bestMatches);
+		}
+
+		// Filter out matches that are not the same length as the input name
+		const lengthMatches = bestMatches.filter((match) => match.member.length === name.length);
+
+		if (lengthMatches.length > 0) {
+			if (lengthMatches.length === 1) {
+				return nameArray[relevantLevMatches[lengthMatches[0].index].index];
+			} else {
+				const randomIndex = Math.floor(Math.random() * lengthMatches.length);
+				const randomMatch = lengthMatches[randomIndex];
+				return nameArray[relevantLevMatches[randomMatch.index].index];
+			}
+		} else {
+			if (bestMatches.length === 1) {
+				return nameArray[relevantLevMatches[bestMatches[0].index].index];
+			} else {
+				const randomIndex = Math.floor(Math.random() * bestMatches.length);
+				const randomMatch = bestMatches[randomIndex];
+				return nameArray[relevantLevMatches[randomMatch.index].index];
+			}
+		}
 	}
 }
 
