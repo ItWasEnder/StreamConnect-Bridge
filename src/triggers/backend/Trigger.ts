@@ -9,22 +9,20 @@ export class EventMapping {
 
 export class Trigger {
 	lastExecuted: number = 0;
-	id: string;
 
 	constructor(
+		public id: string = randomUUID(),
 		public name: string,
 		public events: EventMapping[],
 		public actions: InternalRequest[],
 		public cooldown: number = 0,
 		public log: boolean = true,
 		public enabled: boolean = true
-	) {
-		this.id = randomUUID();
-	}
+	) {}
 
 	static fromObject(object: any): Trigger {
-		const { name, events, actions, cooldown = 0, log = true, enabled = true } = object;
-		if (!name || !events || !actions) {
+		const { id, name, events, actions, cooldown = 0, log = true, enabled = true } = object;
+		if (!id || !name || !events || !actions) {
 			throw new Error('Invalid trigger object. Missing required properties.');
 		}
 
@@ -36,12 +34,12 @@ export class Trigger {
 
 			const mapping: EventMapping = {
 				event: event,
-				conditions: conditions.map((condition: any) => new Condition(condition))
+				conditions: conditions.map((condition: any) => new Condition(condition)),
 			};
 
 			return mapping;
 		});
 
-		return new Trigger(name, __events, actions, cooldown, log, enabled);
+		return new Trigger(id, name, __events, actions, cooldown, log, enabled);
 	}
 }

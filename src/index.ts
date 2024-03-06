@@ -13,7 +13,7 @@ import {
 	TIKTOK_EVENTS,
 	TikTokHandler,
 	TiktokChat,
-	TiktokEvent
+	TiktokEvent,
 } from './handlers/TikTokHandler';
 import { ProviderManager } from './providers/ProviderManager';
 import { TikfinityWebServerHandler } from './handlers/TikfinityHandler';
@@ -88,8 +88,8 @@ function runInterface() {
 		{
 			type: 'input',
 			name: 'action',
-			message: 'Command:'
-		}
+			message: 'Command:',
+		},
 	];
 
 	inquirer.prompt(questions).then((answers: any) => {
@@ -108,13 +108,16 @@ async function handleCommand(action: string) {
 		case 'c':
 			console.clear();
 			break;
+		case 'mt':
+			await modifyTriggerFlow();
+			break;
 		case 'tc':
 			const { chat } = await inquirer.prompt([
 				{
 					type: 'input',
 					name: 'chat',
-					message: 'Enter a chat-message:'
-				}
+					message: 'Enter a chat-message:',
+				},
 			]);
 
 			let _chat: string = chat as string;
@@ -136,12 +139,12 @@ async function handleCommand(action: string) {
 				isModerator: false,
 				timestamp: Date.now(),
 				data: {
-					comment: _chat
-				} as TiktokChat
+					comment: _chat,
+				} as TiktokChat,
 			};
 
 			EMITTER.emit(TIKTOK_EVENTS.CHAT, {
-				data: event
+				data: event,
 			});
 
 			break;
@@ -179,19 +182,19 @@ async function handleCommand(action: string) {
 			console.log(mStack.join('\n') + '\n');
 			break;
 		case 'r':
-			const choices: any[] = [{ name: 'Restart all services', value: 'all' }];
+			var choices: any[] = [{ name: 'Restart all services', value: 'all' }];
 
 			CONNECTION_MANAGER.getConfigs().forEach((config) => {
 				choices.push({ name: config.name, value: config.id });
 			});
 
-			const { service } = await inquirer.prompt([
+			var { service } = await inquirer.prompt([
 				{
 					type: 'list',
 					name: 'service',
 					message: 'Select a service to restart:',
-					choices: choices
-				}
+					choices: choices,
+				},
 			]);
 
 			if (service === 'all') {
@@ -243,14 +246,14 @@ function loadConfigs() {
 function setupHandlers() {
 	if (CONNECTION_MANAGER.getConfigs().length === 0) {
 		EMITTER.emit(INTERNAL_EVENTS.WARN, {
-			data: { message: 'No configurations found. Please create "storage/modules.json"' }
+			data: { message: 'No configurations found. Please create "storage/modules.json"' },
 		});
 	} else {
 		try {
 			setupTitsService();
 		} catch (error) {
 			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: 'Error occured trying to setup TITS service...' }
+				data: { message: 'Error occured trying to setup TITS service...' },
 			});
 			console.error(error);
 		}
@@ -259,7 +262,7 @@ function setupHandlers() {
 			setupTikfinityService();
 		} catch (error) {
 			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: 'Error occured trying to setup tikfinity service...' }
+				data: { message: 'Error occured trying to setup tikfinity service...' },
 			});
 			console.error(error);
 		}
@@ -268,7 +271,7 @@ function setupHandlers() {
 			setupTiktokService();
 		} catch (error) {
 			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: 'Error occured trying to setup tiktok service...' }
+				data: { message: 'Error occured trying to setup tiktok service...' },
 			});
 			console.error(error);
 		}
@@ -277,7 +280,7 @@ function setupHandlers() {
 			setupPOGService();
 		} catch (error) {
 			EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: 'Error occured trying to setup VTS-POG service...' }
+				data: { message: 'Error occured trying to setup VTS-POG service...' },
 			});
 			console.error(error);
 		}
@@ -336,11 +339,11 @@ function setupTitsService() {
 function printResult<T>(result: Result<T>) {
 	if (result.isSuccess) {
 		EMITTER.emit(INTERNAL_EVENTS.GOOD, {
-			data: { message: result.message }
+			data: { message: result.message },
 		});
 	} else {
 		EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: result.message }
+			data: { message: result.message },
 		});
 	}
 }
@@ -354,4 +357,90 @@ function shutdown() {
 
 	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
 	// process.exit(0);
+}
+async function modifyTriggerFlow() {
+	let loop = true;
+
+	const editOptions: any[] = [
+		{ name: 'Enable', value: 'enable' },
+		{ name: 'Disable', value: 'disable' },
+		{ name: 'Remove', value: 'remove' },
+		{ name: 'Cooldown', value: 'cooldown' },
+		{ name: 'Back', value: 'back' },
+	];
+
+	do {
+		let choices: any[] = [{ name: '[[ Exit ]]', value: 'exit' }];
+
+		TRIGGER_MANAGER.getTriggers().forEach((trigger) => {
+			choices.push({
+				name: `${trigger.name} <${trigger.enabled ? chalk.green('Enabled') : chalk.red('Disabled')}>`,
+				value: trigger.id,
+			});
+		});
+
+		const { trigger } = await inquirer.prompt([
+			{
+				type: 'list',
+				name: 'trigger',
+				message: 'Select a trigger to modify:',
+				choices: choices,
+			},
+		]);
+
+		if (trigger === 'exit') {
+			loop = false;
+			break;
+		}
+
+		let { action } = await inquirer.prompt([
+			{
+				type: 'list',
+				name: 'action',
+				message: 'Select an action:',
+				choices: editOptions,
+			},
+		]);
+
+		console.log('Selected:', action);
+
+		if (action === 'back') {
+			return;
+		} else {
+			const _trigger = TRIGGER_MANAGER.getTrigger(trigger);
+			if (_trigger) {
+				switch (action) {
+					case 'enable':
+						_trigger.enabled = true;
+						console.log(chalk.green('>> Enabled trigger:'), _trigger.name);
+						break;
+					case 'disable':
+						_trigger.enabled = false;
+						console.log(chalk.red('>> Disabled trigger:'), _trigger.name);
+						break;
+					case 'remove':
+						TRIGGER_MANAGER.removeTrigger(_trigger.id);
+						break;
+					case 'cooldown':
+						console.log('>> Current cooldown:', _trigger.cooldown / 1000, 'seconds');
+						let { cooldown } = await inquirer.prompt([
+							{
+								type: 'input',
+								name: 'cooldown',
+								message: 'Enter a new cooldown time (in seconds):',
+							},
+						]);
+
+						_trigger.cooldown = parseInt(cooldown) * 1000;
+
+						console.log('>> Updated cooldown:', _trigger.cooldown / 1000, 'seconds');
+						break;
+					default:
+						console.log('>> Invalid action:', action);
+				}
+			} else {
+				console.log('>> Trigger not found:', trigger);
+			}
+		}
+	} while (loop);
 }

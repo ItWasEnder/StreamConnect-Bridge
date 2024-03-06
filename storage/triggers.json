@@ -30,8 +30,8 @@
 				"bypass_cooldown": false,
 				"context": {
 					"tryItem": "$$data.comment",
-					"count": 1,
-					"delay": 0.8
+					"count": 5,
+					"delay": 0.1
 				}
 			}
 		]

@@ -70,6 +70,15 @@ export class TriggerManager extends Emitting {
 	}
 
 	/**
+	 * This method gets a trigger from the triggers map
+	 * @param id the id of the trigger to get
+	 * @returns the trigger with the given id, or undefined if not found
+	 */
+	getTrigger(id: string): Trigger | undefined {
+		return this.triggers.get(id);
+	}
+
+	/**
 	 * This method removes a trigger from the triggers list
 	 * @param id the id of the trigger to remove
 	 * @returns true if the trigger was removed, false otherwise
@@ -119,7 +128,7 @@ export class TriggerManager extends Emitting {
 			// Check if the trigger's conditions are met
 			const __results = JSONPath({
 				path: `$.[?(@.event=="${eventName}")]`,
-				json: trigger.events
+				json: trigger.events,
 			});
 
 			// Failed to find matching event in trigger @@@ technically an error but doesn't matter
@@ -170,8 +179,8 @@ export class TriggerManager extends Emitting {
 				if (trigger.log) {
 					this.emit(INTERNAL_EVENTS.INFO, {
 						data: {
-							message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} ${eventInfo}`
-						}
+							message: `Trigger '${trigger.name}' executed by @${__baseEvent.username}${nickname ? `(${nickname})` : ''} ${eventInfo}`,
+						},
 					});
 				}
 
@@ -229,6 +238,7 @@ export class TriggerManager extends Emitting {
 
 			for (const _trigger of triggers) {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
+				console.log(trigger);
 				this.addTrigger(trigger);
 			}
 

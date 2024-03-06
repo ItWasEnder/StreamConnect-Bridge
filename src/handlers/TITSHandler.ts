@@ -325,13 +325,17 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			apiVersion: '1.0',
 			requestID: requestId,
 			messageType: REQUEST_TYPES.THROW_ITEMS,
-			delayTime: delay,
-			amountOfThrows: count,
-			errorOnMissingID: false,
 			data: {
-				items: items
+				items: items,
+				delayTime: delay,
+				amountOfThrows: count,
+				errorOnMissingID: false
 			}
 		};
+
+		if (process.env.NODE_ENV === 'development') {
+			console.log('req', req);
+		}
 
 		this.send(req, (error) => this.handleError(REQUEST_TYPES.THROW_ITEMS, error));
 	}
