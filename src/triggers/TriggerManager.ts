@@ -238,7 +238,6 @@ export class TriggerManager extends Emitting {
 
 			for (const _trigger of triggers) {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
-				console.log(trigger);
 				this.addTrigger(trigger);
 			}
 

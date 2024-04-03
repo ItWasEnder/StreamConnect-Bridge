@@ -2,7 +2,7 @@
 	{
 		"id": "584ca855-0236-4b36-ac44-7c1ee92c9bd9",
 		"name": "Wildcard Throw Command",
-		"cooldown": 5000,
+		"cooldown": 100,
 		"log": true,
 		"enabled": true,
 		"events": [
@@ -30,7 +30,7 @@
 				"bypass_cooldown": false,
 				"context": {
 					"tryItem": "$$data.comment",
-					"count": 5,
+					"count": 1,
 					"delay": 0.1
 				}
 			}
@@ -39,7 +39,7 @@
 	{
 		"id": "3b17da1b-47f0-458c-a74e-ffd566946807",
 		"name": "Throw Pan Command",
-		"cooldown": 15000,
+		"cooldown": 100,
 		"log": true,
 		"enabled": true,
 		"events": [

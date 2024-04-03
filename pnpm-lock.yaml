@@ -30,8 +30,8 @@ dependencies:
     specifier: ^1.3.0
     version: 1.3.0
   tiktok-live-connector:
-    specifier: ^1.1.3
-    version: 1.1.3
+    specifier: ^1.1.5
+    version: 1.1.5
   ws:
     specifier: ^8.16.0
     version: 8.16.0
@@ -4345,8 +4345,8 @@ packages:
       any-promise: 1.3.0
     dev: true
 
-  /tiktok-live-connector@1.1.3:
-    resolution: {integrity: sha512-5SJZfj/MaBJR7EFZOwV9gRSAZkMPyUax51auVvlF+RZ+RhV/ydC2VJQKOHOyp9pIrTm1C0sFSsvo54QEwx+GkQ==}
+  /tiktok-live-connector@1.1.5:
+    resolution: {integrity: sha512-st+jRhXfw2RyWTAQdqttj6F4FBUEc0lPBEb3iE79xAi30neOA7Eqy+xEC2Z2+T58Q3uPhbOxy4nQqwCO5W/F/A==}
     engines: {node: '>=10.0.0'}
     dependencies:
       axios: 0.25.0
