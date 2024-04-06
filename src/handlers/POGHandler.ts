@@ -5,11 +5,10 @@ import { STATUS, Service } from '../connections/backend/Service';
 import http from 'http';
 
 export class POGHandler extends Service implements RequestExecuter {
-	private config: ConnectionConfig;
 	private host: string;
 	private port: number;
 
-	constructor(config: ConnectionConfig) {
+	constructor(public config: ConnectionConfig) {
 		super();
 		this.config = config;
 

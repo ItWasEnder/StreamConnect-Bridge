@@ -33,10 +33,11 @@ enum TRIGGER_TYPE {
 
 export class TikfinityWebServerHandler extends WebServerInst {
 	constructor(
-		private config: ConnectionConfig,
+		public config: ConnectionConfig,
 		private providerManager: ProviderManager
 	) {
 		super();
+		this.setupRoutes();
 	}
 
 	get service(): string {

@@ -1,5 +1,17 @@
 [
 	{
+		"id": "internal-api",
+		"enabled": true,
+		"name": "Internal API - Webserver",
+		"description": "This will host an api to allow internal app interations",
+		"type": "webserver",
+		"info": {
+			"host": "localhost",
+			"port": 14228,
+			"apiKey": ""
+		}
+	},
+	{
 		"id": "tikfinity",
 		"enabled": true,
 		"name": "Tikfinity - Webserver",

@@ -56,10 +56,9 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	private refreshInProgress = false;
 	private requestTimeoutMs = 5000;
 
-	private config: ConnectionConfig;
 	public provider: ActionProvider<TITSActionData>;
 
-	constructor(config: ConnectionConfig) {
+	constructor(public config: ConnectionConfig) {
 		super();
 		this.config = config;
 

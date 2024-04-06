@@ -18,8 +18,6 @@ export abstract class WebServerInst extends Service {
 		this.register('GET', '/health', (req, res) => {
 			res.send('OK');
 		});
-
-		this.setupRoutes();
 	}
 
 	abstract setupRoutes(): void;

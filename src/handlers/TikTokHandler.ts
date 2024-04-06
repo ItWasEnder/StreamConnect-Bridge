@@ -47,7 +47,6 @@ export interface TiktokSubscribe {
 }
 
 export class TikTokHandler extends Service {
-	private config: ConnectionConfig;
 	private connection: WebcastPushConnection;
 	private reconnectAttempts: number = 0;
 	private maxReconnectAttempts: number = 4;
@@ -55,7 +54,7 @@ export class TikTokHandler extends Service {
 	private reconnectEnabled: boolean = true;
 	private clientDisconnected: boolean = false;
 
-	constructor(config: ConnectionConfig) {
+	constructor(public config: ConnectionConfig) {
 		super();
 		this.config = config;
 		this.connection = null;

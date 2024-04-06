@@ -20,6 +20,7 @@ import { TikfinityWebServerHandler } from './handlers/TikfinityHandler';
 import { TITSWebSocketHandler } from './handlers/TITSHandler';
 import { POGHandler } from './handlers/POGHandler';
 import { Result } from './utils/Result';
+import { InternalAPIHandler as InternalAPIHandler } from './handlers/InternalAPIHandler';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -67,6 +68,13 @@ process.on('SIGINT', () => {
 
 // Run the program
 loadConfigs();
+
+const INTERNAL_API: InternalAPIHandler = new InternalAPIHandler(
+	CONNECTION_MANAGER.getConfig('internal-api'),
+	CONNECTION_MANAGER,
+	TRIGGER_MANAGER,
+	PROVIDER_MANAGER
+);
 
 // Setup handlers
 setupHandlers();
@@ -244,6 +252,8 @@ function loadConfigs() {
 }
 
 function setupHandlers() {
+	INTERNAL_API.start();
+
 	if (CONNECTION_MANAGER.getConfigs().length === 0) {
 		EMITTER.emit(INTERNAL_EVENTS.WARN, {
 			data: { message: 'No configurations found. Please create "storage/modules.json"' },
@@ -354,6 +364,7 @@ function shutdown() {
 
 	CONNECTION_MANAGER.close();
 	FILE_MANAGER.close();
+	INTERNAL_API.stop();
 
 	console.log(Text.coloredPill(Text.COLORS.RED) + ' Exiting the program. Goodbye!');
 	// process.exit(0);
