@@ -39,7 +39,7 @@ export class ActionMap<T extends ActionData> {
 
 			const __updated = {
 				...__action,
-				...action
+				...action,
 			};
 
 			this.actionMap.set(action.id, __updated);
@@ -180,6 +180,21 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 	}
 
 	/**
+	 * Get an ActionData from an action identifier
+	 * @param actionId identifier
+	 * @returns the associated ActionData or undefined if no value is set
+	 */
+	getActions() {
+		const actions: T[] = [];
+
+		for (const [_, actionMap] of this.categoryMap) {
+			actions.push(...actionMap.getActions());
+		}
+
+		return actions;
+	}
+
+	/**
 	 * This method returns the number of actions in the provider
 	 * @returns the number of actions in the provider
 	 */
@@ -195,15 +210,15 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 
 	/**
 	 * This function will generate a new ActionMap if the category does not exist
-	 * @param actionId the category identifier
+	 * @param categoryId the category identifier
 	 * @returns an ActionMap for the given category
 	 */
-	getActionMap(actionId: string): ActionMap<T> {
-		let actionMap: ActionMap<T> | undefined = this.categoryMap.get(actionId);
+	getActionMap(categoryId: string): ActionMap<T> {
+		let actionMap: ActionMap<T> | undefined = this.categoryMap.get(categoryId);
 
 		if (actionMap === undefined) {
 			actionMap = new ActionMap();
-			this.categoryMap.set(actionId, actionMap);
+			this.categoryMap.set(categoryId, actionMap);
 		}
 
 		return actionMap;
@@ -254,62 +269,64 @@ export class ActionProvider<T extends ActionData> extends Emitting {
 	/**
 	 * Load actions from the provider func
 	 */
-	loadActions() {
+	async loadActions() {
 		if (!this._loadActions) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: `ActionProvider@${this.providerId} >> Error: _loadActions is not defined` }
+				data: {
+					message: `ActionProvider@${this.providerId} >> Error: _loadActions is not defined`,
+				},
 			});
 			return;
 		}
 
-		// clear the maps
-		this.clearAll();
+		try {
+			// clear the maps
+			this.clearAll();
 
-		// load new data
-		this._loadActions()
-			.then((actions) => {
-				let count = 0;
+			// load new data
+			const actions = await this._loadActions();
 
-				if (!actions || actions.length === 0) {
-					throw new OptionsError('No actions were loaded', { print: true });
+			let count = 0;
+
+			if (!actions || actions.length === 0) {
+				throw new OptionsError('No actions were loaded', { print: true });
+			}
+
+			// console.log('actions:', JSON.stringify(actions, null, 2));
+
+			for (const [categoryId, actionData] of actions) {
+				const actionMap = this.getActionMap(categoryId);
+
+				for (const __action of actionData) {
+					const action = __action as T;
+					actionMap.put(action);
+					this.reverseMap.set(action.id, categoryId);
 				}
 
-				// console.log('actions:', JSON.stringify(actions, null, 2));
+				count += actionMap.size();
+			}
 
-				for (const [categoryId, actionData] of actions) {
-					const actionMap = this.getActionMap(categoryId);
-
-					for (const __action of actionData) {
-						const action = __action as T;
-						actionMap.put(action);
-						this.reverseMap.set(action.id, categoryId);
-					}
-
-					count += actionMap.size();
-				}
-
-				this.emit(INTERNAL_EVENTS.INFO, {
-					data: {
-						message: `ActionProvider@${this.providerId} >> Loaded ${this.categoryMap.size} categories with ${count} actions...`
-					}
-				});
-			})
-			.catch((error) => {
-				this.emit(INTERNAL_EVENTS.ERROR, {
-					data: {
-						message: `ActionProvider@${this.providerId} >> Error occured trying to load actions: ${error.message}`
-					}
-				});
-
-				let print = true;
-
-				if (error instanceof OptionsError) {
-					print = (error as OptionsError).options?.print ?? true;
-				}
-
-				if (print) {
-					console.error(error);
-				}
+			this.emit(INTERNAL_EVENTS.INFO, {
+				data: {
+					message: `ActionProvider@${this.providerId} >> Loaded ${this.categoryMap.size} categories with ${count} actions...`,
+				},
 			});
+		} catch (error) {
+			this.emit(INTERNAL_EVENTS.ERROR, {
+				data: {
+					message: `ActionProvider@${this.providerId} >> Error occured trying to load actions: ${error.message}`,
+				},
+			});
+
+			let print = true;
+
+			if (error instanceof OptionsError) {
+				print = (error as OptionsError).options?.print ?? true;
+			}
+
+			if (print) {
+				console.error(error);
+			}
+		}
 	}
 }

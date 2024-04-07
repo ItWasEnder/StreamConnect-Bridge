@@ -4,13 +4,13 @@ import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler';
 import { RawData } from 'ws';
 import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider';
 import { OptionsError } from '../utils/OptionsError';
-import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest';
+import { InternalRequest, RequestExecutor } from '../providers/backend/InternalRequest';
 import crypto from 'crypto';
 import { Result } from '../utils/Result';
 
 export const TITS_ACTIONS = {
 	THROW_ITEMS: 'tits-throw-items',
-	ACTIVATE_TRIGGER: 'tits-activate-trigger'
+	ACTIVATE_TRIGGER: 'tits-activate-trigger',
 };
 
 export interface TITSMessage {
@@ -37,7 +37,7 @@ const REQUEST_TYPES = {
 	ITEM_INFO: 'TITSItemInfoRequest',
 	TRIGGER_LIST: 'TITSTriggerListRequest',
 	THROW_ITEMS: 'TITSThrowItemsRequest',
-	TRIGGER_ACTIVATE: 'TITSTriggerActivateRequest'
+	TRIGGER_ACTIVATE: 'TITSTriggerActivateRequest',
 };
 
 export const RESPONSE_TYPES = {
@@ -46,11 +46,11 @@ export const RESPONSE_TYPES = {
 	TRIGGER_LIST: 'TITSTriggerListResponse',
 	THROW_ITEMS: 'TITSThrowItemsResponse',
 	TRIGGER_ACTIVATE: 'TITSTriggerActivateResponse',
-	ERROR: 'APIError'
+	ERROR: 'APIError',
 };
 
 // WebSocket handler class
-export class TITSWebSocketHandler extends WebSocketInst implements RequestExecuter {
+export class TITSWebSocketHandler extends WebSocketInst implements RequestExecutor {
 	private messageHandlers: Map<string, (data: TITSMessage) => void> = new Map();
 	private pendingRequests: Map<string, PendingRequest> = new Map();
 	private refreshInProgress = false;
@@ -65,7 +65,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		this.provider = new ActionProvider<TITSActionData>(config.id, async () => {
 			const promise = this.refreshData();
 			const [items, triggers] = await promise;
-
+			// return array of array objects with type [categoryId, ActionData[]]
 			return [items, triggers];
 		});
 
@@ -86,7 +86,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	async refreshData(): Promise<[string, TITSActionData[]][]> {
 		if (this.refreshInProgress) {
 			this.emit(INTERNAL_EVENTS.ERROR, {
-				data: { message: `TITSHandler >> Data refresh currently in progress. Please wait.` }
+				data: { message: `TITSHandler >> Data refresh currently in progress. Please wait.` },
 			});
 			return Promise.reject(
 				new OptionsError(`Data refresh currently in progress. Please wait.`, { print: false })
@@ -95,14 +95,14 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 
 		this.refreshInProgress = true;
 
-		const timeoutPromise = new Promise<[TITSMessage, TITSMessage]>((_, reject) =>
+		const timeoutPromise = new Promise<[TITSMessage, TITSMessage]>((resolve, reject) =>
 			setTimeout(() => {
 				this.pendingRequests.forEach((request, key) => {
 					request.reject(new OptionsError('Request timed out.', { print: false }));
 					this.pendingRequests.delete(key);
 				});
 
-				reject(new OptionsError('Refresh data timeout', { print: false }));
+				resolve(null);
 			}, this.requestTimeoutMs)
 		);
 
@@ -112,8 +112,12 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 
 			const result = await Promise.race([
 				Promise.all([itemsPromise, triggersPromise]),
-				timeoutPromise
+				timeoutPromise,
 			]);
+
+			if (result === null) {
+				return Promise.reject(new OptionsError(`Request timed out.`, { print: false }));
+			}
 
 			const [__items, __triggers]: [TITSMessage, TITSMessage] = result;
 			const itemsData: TITSActionData[] = this.processMessageResponse('items', __items);
@@ -121,7 +125,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 
 			return [
 				[TITS_ACTIONS.THROW_ITEMS, itemsData],
-				[TITS_ACTIONS.ACTIVATE_TRIGGER, triggersData]
+				[TITS_ACTIONS.ACTIVATE_TRIGGER, triggersData],
 			];
 		} finally {
 			this.refreshInProgress = false;
@@ -145,7 +149,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				apiVersion: '1.0',
 				requestID: __requestId,
 				messageType: REQUEST_TYPES.ITEM_LIST,
-				sendImage: false
+				sendImage: false,
 			},
 			(error) => this.handleError(REQUEST_TYPES.ITEM_LIST, error)
 		);
@@ -163,7 +167,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				apiName: 'TITSPublicApi',
 				apiVersion: '1.0',
 				requestID: __requestId,
-				messageType: REQUEST_TYPES.TRIGGER_LIST
+				messageType: REQUEST_TYPES.TRIGGER_LIST,
 			},
 			(error) => this.handleError(REQUEST_TYPES.TRIGGER_LIST, error)
 		);
@@ -173,7 +177,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		});
 	}
 
-	executeRequest(request: InternalRequest): Result<string> {
+	async executeRequest(request: InternalRequest): Promise<Result<string>> {
 		const { caller, requestId, providerKey, bypass_cooldown, context } = request;
 		const __info = `(requestId: ${requestId}, caller: ${caller})`;
 
@@ -249,7 +253,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				break;
 			default:
 				this.emit(INTERNAL_EVENTS.ERROR, {
-					data: { message: `TITSHandler >> Unhandled categoryId: ${categoryId}` }
+					data: { message: `TITSHandler >> Unhandled categoryId: ${categoryId}` },
 				});
 				return;
 		}
@@ -276,7 +280,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			const pendingRequest = this.pendingRequests.get(response.requestID);
 			if (pendingRequest) {
 				pendingRequest.resolve(response);
-				this.pendingRequests.delete(response.messageType);
+				this.pendingRequests.delete(response.requestID);
 				return;
 			}
 
@@ -290,11 +294,11 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 	}
 
 	private setup(): void {
-		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, (payload) => {
+		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, async (payload) => {
 			const __request: InternalRequest = payload.data;
 
 			if (__request.providerId === this.provider.providerId) {
-				const result = this.executeRequest(__request);
+				const result = await this.executeRequest(__request);
 
 				// only print error execution
 				if (!result.isSuccess) {
@@ -306,8 +310,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		this.setCallback(RESPONSE_TYPES.ERROR, (message: TITSMessage) => {
 			this.emit(INTERNAL_EVENTS.ERROR, {
 				data: {
-					message: `TITSSocketHandler >> An error occured when attempting to call socket api.`
-				}
+					message: `TITSSocketHandler >> An error occured when attempting to call socket api.`,
+				},
 			});
 			console.error(message.data);
 		});
@@ -328,8 +332,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				items: items,
 				delayTime: delay,
 				amountOfThrows: count,
-				errorOnMissingID: false
-			}
+				errorOnMissingID: false,
+			},
 		};
 
 		if (process.env.NODE_ENV === 'development') {
@@ -347,8 +351,8 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				requestID: requestId,
 				messageType: REQUEST_TYPES.TRIGGER_ACTIVATE,
 				data: {
-					triggerID: triggerId
-				}
+					triggerID: triggerId,
+				},
 			},
 			(error) => this.handleError(REQUEST_TYPES.TRIGGER_ACTIVATE, error)
 		);
@@ -360,7 +364,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		}
 
 		this.emit(INTERNAL_EVENTS.ERROR, {
-			data: { message: `An error occured when attempting to call ${func}` }
+			data: { message: `An error occured when attempting to call ${func}` },
 		});
 		console.error(error);
 	}
@@ -376,7 +380,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 				id: id,
 				name: name,
 				cooldown: 0,
-				wildSupport: true
+				wildSupport: true,
 			});
 		}
 

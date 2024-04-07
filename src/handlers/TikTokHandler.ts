@@ -3,6 +3,7 @@ import { ConnectionConfig, TikTokInfo } from '../connections/backend/Connection'
 import { STATUS, Service } from '../connections/backend/Service';
 import { INTERNAL_EVENTS } from '../events/EventsHandler';
 import { BaseEvent } from '../triggers/TriggerManager';
+import { Platform } from '../moderation/UserManager';
 
 export const TIKTOK_EVENTS = {
 	FOLLOW: 'tiktok-follow',
@@ -20,6 +21,7 @@ export enum FOLLOW_STATUS {
 }
 
 export interface TiktokEvent extends BaseEvent {
+	platform: Platform.TIKTOK;
 	nickname: string;
 	userId: string;
 	followRole: FOLLOW_STATUS;
@@ -263,6 +265,7 @@ export class TikTokHandler extends Service {
 
 	private parseData(event: string, data: any): TiktokEvent {
 		return {
+			platform: Platform.TIKTOK,
 			event: event,
 			nickname: data.nickname,
 			username: data.uniqueId,

@@ -1,10 +1,11 @@
 import { EMITTER, INTERNAL_EVENTS } from '../events/EventsHandler';
-import { InternalRequest, RequestExecuter } from '../providers/backend/InternalRequest';
+import { InternalRequest, RequestExecutor } from '../providers/backend/InternalRequest';
 import { ConnectionConfig, WebHookInfo } from '../connections/backend/Connection';
 import { STATUS, Service } from '../connections/backend/Service';
 import http from 'http';
+import { Result } from '../utils/Result';
 
-export class POGHandler extends Service implements RequestExecuter {
+export class POGHandler extends Service implements RequestExecutor {
 	private host: string;
 	private port: number;
 
@@ -27,14 +28,41 @@ export class POGHandler extends Service implements RequestExecuter {
 			if ((await this.status()) !== STATUS.ONLINE) {
 				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
 					data: {
-						message: `POGHandler >> Action cancelled, connection is not currently available ${__info}`
-					}
+						message: `POGHandler >> Action cancelled, connection is not currently available ${__info}`,
+					},
 				});
 				return;
 			}
 
 			this.executeRequest(__request);
 		});
+	}
+
+	executeRequest(request: InternalRequest): Promise<Result<string>> {
+		const { context } = request;
+		const __info = `(requestId: ${request.requestId}, caller: ${request.caller})`;
+
+		const { username, voice = 'brian', service = 'monster', limit = '350', message = '' } = context;
+		const __message: string = message.replace(/^!\w+\s/, '');
+
+		this.sendTTSRequest(__message, username, voice, service, limit)
+			.then((_) => {
+				EMITTER.emit(INTERNAL_EVENTS.INFO, {
+					data: { message: `Action 'TTS' executed by '${username}' with message '${__message}'` },
+				});
+			})
+			.catch((error) => {
+				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
+					data: {
+						message: `POGHandler >> Error occurred trying to execute TTS action by '${username}' ${__info}`,
+					},
+				});
+				console.error(error);
+			});
+
+		return Promise.resolve(
+			Result.pass(`Action 'TTS' executed by '${username}' with message '${__message}'`)
+		);
 	}
 
 	get service(): string {
@@ -56,29 +84,6 @@ export class POGHandler extends Service implements RequestExecuter {
 		} catch (error) {
 			throw error;
 		}
-	}
-
-	executeRequest(request: InternalRequest): void {
-		const { context } = request;
-		const __info = `(requestId: ${request.requestId}, caller: ${request.caller})`;
-
-		const { username, voice = 'brian', service = 'monster', limit = '350', message = '' } = context;
-		const __message: string = message.replace(/^!\w+\s/, '');
-
-		this.sendTTSRequest(__message, username, voice, service, limit)
-			.then((_) => {
-				EMITTER.emit(INTERNAL_EVENTS.INFO, {
-					data: { message: `Action 'TTS' executed by '${username}' with message '${__message}'` }
-				});
-			})
-			.catch((error) => {
-				EMITTER.emit(INTERNAL_EVENTS.ERROR, {
-					data: {
-						message: `POGHandler >> Error occurred trying to execute TTS action by '${username}' ${__info}`
-					}
-				});
-				console.error(error);
-			});
 	}
 
 	start(): void {}

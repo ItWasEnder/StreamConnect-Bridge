@@ -7,21 +7,42 @@ import { TriggersController } from '../controllers/TriggersController';
 import { ProviderController } from '../controllers/ProviderController';
 import { UserController } from '../controllers/UserController';
 import { STATUS } from '../connections/backend/Service';
-import { ActionData, ActionProvider } from '../providers/backend/ActionProvider';
+import { ActionData, ActionMap, ActionProvider } from '../providers/backend/ActionProvider';
+import { INTERNAL_EVENTS, EMITTER } from '../events/EventsHandler';
+import {
+	ContextLike,
+	InternalRequest,
+	RequestExecutor,
+} from '../providers/backend/InternalRequest';
+import { Result } from '../utils/Result';
+import { InternalAction } from '../internal/backend/InternalAction';
+import { ModifyTrigger } from '../internal/ModifyTrigger';
+import { ManageUsers } from '../internal/ManagerUsers';
 
 export interface InternalActionData extends ActionData {
 	lastTriggered?: number;
-	callback: any;
+	executor: Function;
 }
 
-class InternalActionProvider extends ActionProvider<InternalActionData> {
-	override async loadActions(): Promise<[string, InternalActionData[]][]> {
-		return [];
+export class InternalActionProvider extends ActionProvider<InternalActionData> {
+	override async loadActions() {}
+
+	public register(action: InternalAction): void {
+		const map = this.getActionMap(action.providerKey.categoryId);
+		for (const __action of action.providerKey.actions) {
+			map.put({
+				id: __action,
+				name: action.name,
+				executor: async (context: ContextLike) => {
+					return action.execute(context);
+				},
+			} as InternalActionData);
+		}
 	}
 }
 
-export class InternalAPIHandler extends WebServerInst {
-	public provider: ActionProvider<InternalActionData>;
+export class InternalAPIHandler extends WebServerInst implements RequestExecutor {
+	public provider: InternalActionProvider;
 
 	constructor(
 		public config: ConnectionConfig,
@@ -31,11 +52,14 @@ export class InternalAPIHandler extends WebServerInst {
 	) {
 		super();
 		this.config = config;
-		this.setupRoutes();
 
 		this.provider = new InternalActionProvider(config.id, async () => {
 			return [];
 		});
+
+		this.providerManager.registerProvider(this.provider);
+
+		this.setup();
 	}
 
 	get service(): string {
@@ -44,6 +68,11 @@ export class InternalAPIHandler extends WebServerInst {
 
 	get port(): number {
 		return (this.config.info as WebHookInfo).port;
+	}
+
+	registerActions() {
+		this.provider.register(new ModifyTrigger(this.triggersManager));
+		this.provider.register(new ManageUsers());
 	}
 
 	setupRoutes() {
@@ -89,8 +118,23 @@ export class InternalAPIHandler extends WebServerInst {
 		);
 		this.register(
 			'GET',
-			'/api/providers/:id',
-			providerController.getProvider.bind(providerController)
+			'/api/providers/load',
+			providerController.loadAllActions.bind(providerController)
+		);
+		this.register(
+			'GET',
+			'/api/providers/:providerId',
+			providerController.getCategories.bind(providerController)
+		);
+		this.register(
+			'GET',
+			'/api/providers/:providerId/actions/:category',
+			providerController.getActions.bind(providerController)
+		);
+		this.register(
+			'GET',
+			'/api/providers/:providerId/load',
+			providerController.loadActions.bind(providerController)
 		);
 
 		this.register('GET', '/api', async (req, res) => {
@@ -118,5 +162,72 @@ export class InternalAPIHandler extends WebServerInst {
 				loadedActions: actions,
 			});
 		});
+	}
+
+	private setup(): void {
+		this.setupRoutes();
+		this.registerActions();
+
+		this.on(INTERNAL_EVENTS.EXECUTE_ACTION, async (payload) => {
+			const __request: InternalRequest = payload.data;
+
+			if (__request.providerId === this.provider.providerId) {
+				const result = await this.executeRequest(__request);
+
+				// only print error execution
+				if (!result.isSuccess) {
+					EMITTER.emit(result.value, { data: { message: result.message } });
+				}
+			}
+		});
+	}
+
+	async executeRequest(request: InternalRequest): Promise<Result<string>> {
+		const { caller, requestId, providerKey, context } = request;
+		const __info = `(requestId: ${requestId}, caller: ${caller})`;
+
+		if (!providerKey) {
+			return Result.fail(`Missing providerKey in request ${__info}`, INTERNAL_EVENTS.ERROR);
+		}
+
+		const { categoryId, actions } = providerKey;
+
+		if (!this.provider.has(categoryId)) {
+			return Result.fail(
+				`Unable to find category based on input of '${JSON.stringify(providerKey)}' ${__info}`,
+				INTERNAL_EVENTS.ERROR
+			);
+		}
+
+		const actionMap: ActionMap<InternalActionData> = this.provider.getActionMap(categoryId);
+		const actionDatas: InternalActionData[] = [];
+
+		// Convert keys to actionable data types
+		providerKey.actions.forEach((id) => actionDatas.push(actionMap.get(id)));
+
+		try {
+			for (const __action of actionDatas) {
+				__action.lastTriggered = Date.now();
+				const result: Result<string> = await __action.executor(context);
+
+				if (!result.isSuccess) {
+					return Result.fail(
+						`Action result was unsuccessful (${result.message}) for action '${categoryId}' with actions ${`[${actions.join(', ')}]`} ${__info}`,
+						INTERNAL_EVENTS.ERROR
+					);
+				}
+			}
+
+			// TODO: Verbose Log Event (to file or console with debug flag)
+			return Result.pass(
+				`Action '${categoryId}' executed with actions ${`[${actions.join(', ')}]`} ${__info}`,
+				INTERNAL_EVENTS.INFO
+			);
+		} catch (error) {
+			return Result.fail(
+				`Error executing action '${categoryId}' with actions ${`[${actions.join(', ')}]`} ${__info}: ${error}`,
+				INTERNAL_EVENTS.ERROR
+			);
+		}
 	}
 }

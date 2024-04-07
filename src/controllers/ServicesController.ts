@@ -1,7 +1,4 @@
 import { Request, Response } from 'express';
-import { TriggerManager } from '../triggers/TriggerManager';
-import { randomUUID } from 'crypto';
-import { Trigger } from '../triggers/backend/Trigger';
 import { ConnectionManager } from '../connections/ConnectionManager';
 
 export class ServicesController {

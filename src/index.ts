@@ -21,6 +21,7 @@ import { TITSWebSocketHandler } from './handlers/TITSHandler';
 import { POGHandler } from './handlers/POGHandler';
 import { Result } from './utils/Result';
 import { InternalAPIHandler as InternalAPIHandler } from './handlers/InternalAPIHandler';
+import { Platform } from './moderation/UserManager';
 
 // Load userData folder for file storage
 const args = process.argv.slice(2); // Slice the first two elements
@@ -138,13 +139,14 @@ async function handleCommand(action: string) {
 
 			console.log(`${Text.coloredPill(Text.COLORS.MAGENTA)} Sending TikTok chat message event...`);
 			const event: TiktokEvent = {
+				platform: Platform.TIKTOK,
 				event: TIKTOK_EVENTS.CHAT,
 				nickname: 'Test',
 				username: 'test',
 				userId: 'test123',
 				followRole: FOLLOW_STATUS.FOLLOWER,
-				isSubscriber: false,
-				isModerator: false,
+				isSubscriber: true,
+				isModerator: true,
 				timestamp: Date.now(),
 				data: {
 					comment: _chat,

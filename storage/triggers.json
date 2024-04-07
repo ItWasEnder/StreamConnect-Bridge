@@ -1,6 +1,6 @@
 [
 	{
-		"id": "584ca855-0236-4b36-ac44-7c1ee92c9bd9",
+		"id": "wthrow",
 		"name": "Wildcard Throw Command",
 		"cooldown": 100,
 		"log": true,
@@ -13,6 +13,7 @@
 						"order": 0,
 						"data_path": "data.comment",
 						"negate": false,
+						"ignore_case": true,
 						"operation": "starts_with",
 						"value": "!throw"
 					}
@@ -29,7 +30,7 @@
 				},
 				"bypass_cooldown": false,
 				"context": {
-					"tryItem": "$$data.comment",
+					"tryItem": "${data.comment}",
 					"count": 1,
 					"delay": 0.1
 				}
@@ -37,7 +38,7 @@
 		]
 	},
 	{
-		"id": "3b17da1b-47f0-458c-a74e-ffd566946807",
+		"id": "pan",
 		"name": "Throw Pan Command",
 		"cooldown": 100,
 		"log": true,
@@ -49,6 +50,7 @@
 					{
 						"order": 0,
 						"negate": false,
+						"ignore_case": true,
 						"data_path": "data.comment",
 						"operation": "equals",
 						"value": "!pan"
@@ -83,7 +85,7 @@
 						"order": 0,
 						"data_path": "data.giftName",
 						"negate": false,
-						"operation": "contains",
+						"operation": "equals",
 						"value": "Galaxy"
 					}
 				]
@@ -128,7 +130,7 @@
 		]
 	},
 	{
-		"id": "73fc6e04-64cc-47f0-a7c9-879154631f25",
+		"id": "toktts",
 		"name": "TTS for Tiktok",
 		"cooldown": 0,
 		"log": true,
@@ -153,8 +155,193 @@
 				"providerId": "vts-pog",
 				"context": {
 					"voice": "brian",
-					"username": "$$username",
-					"message": "$$data.comment"
+					"username": "${username}",
+					"message": "${data.comment}"
+				}
+			}
+		]
+	},
+	{
+		"id": "5d8f295e-a13f-438b-80e7-c85903b56c02",
+		"name": "Mod - Block User",
+		"cooldown": 0,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"conditions": [
+					{
+						"order": 0,
+						"data_path": "isModerator",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "equals",
+						"value": true
+					},
+					{
+						"order": 1,
+						"data_path": "data.comment",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "starts_with",
+						"value": "!block"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": "internal",
+				"providerId": "internal-api",
+				"providerKey": {
+					"categoryId": "internal-commands",
+					"actions": ["ManageUsers"]
+				},
+				"context": {
+					"username": "args(${data.comment})[1]",
+					"platform": "${platform}",
+					"action": "add_block",
+					"itemId": "args(${data.comment})[2]"
+				}
+			}
+		]
+	},
+	{
+		"id": "a14ee217-114e-45f9-92e0-265cc6289362",
+		"name": "Mod - UnBlock User",
+		"cooldown": 0,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"conditions": [
+					{
+						"order": 0,
+						"data_path": "isModerator",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "equals",
+						"value": true
+					},
+					{
+						"order": 1,
+						"data_path": "data.comment",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "starts_with",
+						"value": "!unblock"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": "internal",
+				"providerId": "internal-api",
+				"providerKey": {
+					"categoryId": "internal-commands",
+					"actions": ["ManageUsers"]
+				},
+				"context": {
+					"username": "args(${data.comment})[1]",
+					"platform": "${platform}",
+					"action": "remove_block",
+					"itemId": "args(${data.comment})[2]"
+				}
+			}
+		]
+	},
+	{
+		"id": "4aaa695b-1053-4d6e-89a6-ec6a662b96d8",
+		"name": "Mod - Cooldown User",
+		"cooldown": 0,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"conditions": [
+					{
+						"order": 0,
+						"data_path": "isModerator",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "equals",
+						"value": true
+					},
+					{
+						"order": 1,
+						"data_path": "data.comment",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "starts_with",
+						"value": "!addcd"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": "internal",
+				"providerId": "internal-api",
+				"providerKey": {
+					"categoryId": "internal-commands",
+					"actions": ["ManageUsers"]
+				},
+				"context": {
+					"username": "args(${data.comment})[1]",
+					"platform": "${platform}",
+					"action": "set_cooldown",
+					"itemId": "args(${data.comment})[2]",
+					"cooldown": "args(${data.comment})[3]"
+				}
+			}
+		]
+	},
+	{
+		"id": "4aaa695b-1053-4d6e-89a6-ec6a662b96d8",
+		"name": "Mod - UnCooldown User",
+		"cooldown": 0,
+		"log": true,
+		"enabled": true,
+		"events": [
+			{
+				"event": "tiktok-chat",
+				"conditions": [
+					{
+						"order": 0,
+						"data_path": "isModerator",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "equals",
+						"value": true
+					},
+					{
+						"order": 1,
+						"data_path": "data.comment",
+						"negate": false,
+						"ignore_case": true,
+						"operation": "starts_with",
+						"value": "!clearcd"
+					}
+				]
+			}
+		],
+		"actions": [
+			{
+				"caller": "internal",
+				"providerId": "internal-api",
+				"providerKey": {
+					"categoryId": "internal-commands",
+					"actions": ["ManageUsers"]
+				},
+				"context": {
+					"username": "args(${data.comment})[1]",
+					"platform": "${platform}",
+					"action": "unset_cooldown",
+					"itemId": "args(${data.comment})[2]"
 				}
 			}
 		]

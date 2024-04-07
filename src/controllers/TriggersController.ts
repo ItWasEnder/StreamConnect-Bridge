@@ -22,7 +22,6 @@ export class TriggersController {
 	async addTrigger(req: Request, res: Response): Promise<void> {
 		try {
 			const triggerBody = req.body;
-			triggerBody.id = randomUUID();
 			this.triggerManager.addTrigger(Trigger.fromObject(triggerBody));
 			res.json({ message: 'Trigger added' });
 		} catch (error) {

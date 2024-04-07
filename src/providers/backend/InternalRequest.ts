@@ -1,6 +1,8 @@
+import { Result } from "../../utils/Result";
+
 export enum CALLERS {
 	INTENAL = 'internal',
-	TIKFINITY = 'tikfinity'
+	TIKFINITY = 'tikfinity',
 }
 
 export type ProviderKey = {
@@ -8,17 +10,19 @@ export type ProviderKey = {
 	actions: string[];
 };
 
+export type ContextLike = Record<string, any>;
+
 export interface InternalRequest {
 	caller: CALLERS; // who is calling the action
 	requestId?: string; // request identifier for logging
 	providerId: string; // identifier for the event handler
 	providerKey?: ProviderKey; // used when you need to pass in specific action details
 	bypass_cooldown?: boolean;
-	context: Record<string, any>; // contains the data for the action
+	context: ContextLike; // contains the data for the action
 }
 
-export abstract class RequestExecuter {
-	executeRequest(request: InternalRequest): void {
+export abstract class RequestExecutor {
+	async executeRequest(request: InternalRequest): Promise<Result<string>> {
 		throw new Error('Method not implemented.');
 	}
 }

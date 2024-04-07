@@ -6,13 +6,15 @@ import { FileManager } from '../utils/FileManager';
 import { EventMapping, Trigger } from './backend/Trigger';
 import crypto from 'crypto';
 import * as fs from 'fs';
-import * as path from 'path';
 import { Condition } from './backend/Condition';
 import { InternalRequest } from '../providers/backend/InternalRequest';
 import { Result } from '../utils/Result';
+import { injectData, processLogic } from '../utils/StringProccessor';
+import { Platform, UserData, UserManager } from '../moderation/UserManager';
 
 export interface BaseEvent {
 	event: string;
+	platform: Platform;
 	username: string;
 	timestamp: number;
 }
@@ -156,16 +158,52 @@ export class TriggerManager extends Emitting {
 				continue;
 			}
 
+			const __baseEvent: BaseEvent = eventData;
+
+			// Check is user is restricted
+			const user: UserData = UserManager.getInstance().getUser(
+				__baseEvent.platform,
+				__baseEvent.username
+			);
+
+			const isBlocked = user.blocks.filter((block) => block === trigger.id).length > 0;
+
+			if (isBlocked) {
+				this.emit(INTERNAL_EVENTS.INFO, {
+					data: {
+						message: `Trigger '${trigger.name}' blocked for user @${__baseEvent.username} (${__baseEvent.platform})`,
+					},
+				});
+				continue;
+			}
+
+			const cooldown = user.cooldowns.get(trigger.id) - Date.now();
+			if (cooldown && cooldown > 0) {
+				this.emit(INTERNAL_EVENTS.INFO, {
+					data: {
+						message: `Trigger '${trigger.name}' on cooldown for user @${__baseEvent.username} (${__baseEvent.platform}) timeLeft: ${Math.floor(cooldown / 1000)}s`,
+					},
+				});
+				continue;
+			}
+
 			for (const __request of trigger.actions) {
-				const __baseEvent: BaseEvent = eventData;
 				const request: InternalRequest = JSON.parse(JSON.stringify(__request));
 				const nickname: string | undefined = eventData?.nickname;
 
 				trigger.lastExecuted = Date.now();
 
 				// Inject data into the request
+				for (const key in request.context) {
+					const value = request.context[key];
+
+					if (typeof value !== 'string') continue;
+
+					const out = injectData(value, eventData);
+					request.context[key] = processLogic(out) ?? 'undefined';
+				}
+
 				request.requestId = crypto.randomUUID();
-				this.injectData(request, eventData);
 
 				// compile the event info to send in log message
 				let eventInfo = '';
@@ -210,21 +248,6 @@ export class TriggerManager extends Emitting {
 		}
 
 		return triggers;
-	}
-
-	injectData(request: InternalRequest, data: any): void {
-		for (const key in request.context) {
-			const value = request.context[key];
-
-			if (typeof value === 'string' && value.startsWith('$$')) {
-				const path = value.substring(2);
-				const result = JSONPath({ path, json: data });
-
-				if (result.length === 1) {
-					request.context[key] = result[0];
-				}
-			}
-		}
 	}
 
 	/**

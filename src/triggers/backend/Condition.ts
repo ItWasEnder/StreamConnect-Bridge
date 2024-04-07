@@ -5,20 +5,22 @@ export enum OperationType {
 	CONTAINS = 'contains',
 	STARTS_WITH = 'starts_with',
 	GREATER_THAN = 'greater_than',
-	LESS_THAN = 'less_than'
+	LESS_THAN = 'less_than',
 }
 
 export class Condition {
 	order: number;
 	data_path: string;
 	negate: boolean;
+	ignore_case: boolean;
 	operation: OperationType;
 	value: string | number;
 
 	constructor(data: any) {
 		this.order = data.order;
 		this.data_path = data.data_path;
-		this.negate = data.negate;
+		this.negate = data.negate ?? false;
+		this.ignore_case = data.ignore_case ?? false;
 		this.operation = data.operation;
 		this.value = data.value;
 	}
@@ -31,7 +33,7 @@ export class Condition {
 	evaluate(data: any): boolean {
 		const exact_data = JSONPath({
 			path: `$.${this.data_path}`,
-			json: data
+			json: data,
 		});
 
 		if (!exact_data || exact_data.length === 0) {
@@ -44,7 +46,7 @@ export class Condition {
 
 		switch (this.operation) {
 			case OperationType.EQUALS:
-				result = inputData === this.value;
+				result = inputData == this.value;
 				break;
 			case OperationType.CONTAINS:
 				if (typeof inputData !== 'string') {
@@ -53,7 +55,12 @@ export class Condition {
 					);
 				}
 
-				result = inputData.includes(this.value as string);
+				if (this.ignore_case) {
+					result = inputData.toLowerCase().includes((this.value as string).toLowerCase());
+				} else {
+					result = inputData.includes(this.value as string);
+				}
+
 				break;
 			case OperationType.STARTS_WITH:
 				if (typeof inputData !== 'string') {
@@ -62,7 +69,12 @@ export class Condition {
 					);
 				}
 
-				result = inputData.startsWith(this.value as string);
+				if (this.ignore_case) {
+					result = inputData.toLowerCase().startsWith((this.value as string).toLowerCase());
+				} else {
+					result = inputData.startsWith(this.value as string);
+				}
+
 				break;
 			case OperationType.GREATER_THAN:
 				if (typeof inputData !== 'number') {
