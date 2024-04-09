@@ -125,6 +125,8 @@ export class TikfinityWebServerHandler extends WebServerInst {
 				const __action = __actionmap.get(action);
 				if (__action) {
 					actionNames.push(__action.name);
+				} else {
+					actionNames.push(action);
 				}
 			}
 
@@ -148,7 +150,7 @@ export class TikfinityWebServerHandler extends WebServerInst {
 			// Log the action
 			this.emit(INTERNAL_EVENTS.INFO, {
 				data: {
-					message: `Action '${actionNames.join(', ')}' executed by '${username}(${nickname})' from trigger ${triggerType} ${coinInfo}`
+					message: `Action execution from Tikfinity: '${actionNames.join(', ')}' executed by '${username}(${nickname})' from trigger ${triggerType} ${coinInfo}`
 				}
 			});
 

@@ -73,6 +73,14 @@ export class ActionMap<T extends ActionData> {
 	}
 
 	/**
+	 * This method returns true if the map is empty
+	 * @returns true if the map is empty
+	 */
+	isEmpty() {
+		return this.actionMap.size === 0;
+	}
+
+	/**
 	 * @returns an array of ActionData objects
 	 */
 	getActions(): T[] {

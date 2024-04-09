@@ -49,7 +49,7 @@ export class ProviderManager {
 		let provider: ActionProvider<T> | undefined = undefined;
 
 		for (const _provider of this.providerMap.values()) {
-			if (_provider.getActionMap(categoryId)) {
+			if (_provider.has(categoryId)) {
 				provider = _provider;
 				break;
 			}

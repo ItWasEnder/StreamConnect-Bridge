@@ -198,7 +198,7 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 		// const coinInfo: string = context?.coins ? `for ${context.coins} coins` : '';
 		// const username: string = context?.username ?? '<<unknown>>';
 		const actionMap: ActionMap<TITSActionData> = this.provider.getActionMap(categoryId);
-		const actionDatas: TITSActionData[] = [];
+		let actionDatas: TITSActionData[] = [];
 
 		//providerKey.actions.map((id) => actionMap.get(id))
 
@@ -221,6 +221,15 @@ export class TITSWebSocketHandler extends WebSocketInst implements RequestExecut
 			actions.push(action.id);
 		} else {
 			providerKey.actions.forEach((id) => actionDatas.push(actionMap.get(id)));
+		}
+
+		actionDatas = actionDatas.filter(Boolean);
+
+		if (actionDatas.length === 0) {
+			return Result.fail(
+				`Action not executed, unable to find action based on request '${JSON.stringify(providerKey)}' ${__info}`,
+				INTERNAL_EVENTS.ERROR
+			);
 		}
 
 		// check if any of the actions are currently on cooldown
