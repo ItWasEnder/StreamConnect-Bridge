@@ -364,6 +364,8 @@ function shutdown() {
 	++shutdownAttempts;
 	exit = true;
 
+	TRIGGER_MANAGER.save();
+
 	CONNECTION_MANAGER.close();
 	FILE_MANAGER.close();
 	INTERNAL_API.stop();
@@ -440,11 +442,11 @@ async function modifyTriggerFlow() {
 							{
 								type: 'input',
 								name: 'cooldown',
-								message: 'Enter a new cooldown time (in seconds):',
+								message: 'Enter a new cooldown time (in ms):',
 							},
 						]);
 
-						_trigger.cooldown = parseInt(cooldown) * 1000;
+						_trigger.cooldown = parseInt(cooldown);
 
 						console.log('>> Updated cooldown:', _trigger.cooldown / 1000, 'seconds');
 						break;

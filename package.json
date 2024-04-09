@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "tsc -p tsconfig.build.json",
-		"dev": "cross-env NODE_ENV=development nodemon --exec tsx src/index.ts",
+		"dev": "cross-env NODE_ENV=development nodemon --exec tsx src/index.ts --config nodemon.json",
 		"start": "node dist/index.cjs",
 		"package": "tsup --env.NODE_ENV production && npm run grab_proto",
 		"grab_proto": "cross-env sh ./scripts/grab_proto.sh",

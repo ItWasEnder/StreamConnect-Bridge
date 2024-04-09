@@ -25,6 +25,8 @@ export class TriggerManager extends Emitting {
 	private eventIndex: Map<string, Trigger[]> = new Map(); // <event, triggers[]>
 	private triggers: Map<string, Trigger> = new Map(); // <identifier, trigger>
 
+	private allowUpdate: boolean = true;
+
 	constructor(private fileManager: FileManager) {
 		super();
 
@@ -32,6 +34,8 @@ export class TriggerManager extends Emitting {
 		fileManager.createFileIfNotExists(TriggerManager.TRIGGERS_PATH, '[]');
 
 		fileManager.onChange(TriggerManager.TRIGGERS_PATH, (_path) => {
+			if (!this.allowUpdate) return;
+
 			this.clearAll();
 
 			const result = this.loadTriggers(_path);
@@ -52,9 +56,17 @@ export class TriggerManager extends Emitting {
 	 * This method saves the triggers to the triggers file
 	 */
 	save(): void {
-		const triggers = this.getTriggers();
-		const data = JSON.stringify(triggers, null, 2);
+		this.allowUpdate = false;
+
+		const __triggers = this.getTriggers().map((trigger) => {
+			const { lastExecuted, ...rest } = trigger;
+			return rest;
+		});
+
+		const data = JSON.stringify(__triggers, null, 4);
 		this.fileManager.saveFile(TriggerManager.TRIGGERS_PATH, data);
+
+		this.allowUpdate = true;
 	}
 
 	/**
@@ -62,6 +74,10 @@ export class TriggerManager extends Emitting {
 	 * @param trigger the trigger to add
 	 */
 	addTrigger(trigger: Trigger): void {
+		if (this.triggers.has(trigger.id)) {
+			throw new Error(`Trigger with id ${trigger.id} already exists`);
+		}
+
 		this.triggers.set(trigger.id, trigger);
 
 		if (trigger.enabled) {
@@ -261,6 +277,12 @@ export class TriggerManager extends Emitting {
 
 			for (const _trigger of triggers) {
 				const trigger: Trigger = Trigger.fromObject(_trigger);
+
+				// If collision, generate a new id
+				if (this.triggers.has(trigger.id)) {
+					trigger.id = crypto.randomUUID();
+				}
+				
 				this.addTrigger(trigger);
 			}
 
