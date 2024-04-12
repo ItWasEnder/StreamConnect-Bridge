@@ -33,7 +33,43 @@
                 }
             }
         ],
-        "cooldown": 100,
+        "cooldown": 2000,
+        "log": true,
+        "enabled": true
+    },
+    {
+        "id": "throw",
+        "name": "Throw Random",
+        "events": [
+            {
+                "event": "tiktok-chat",
+                "conditions": [
+                    {
+                        "order": 0,
+                        "data_path": "data.comment",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "equals",
+                        "value": "!throw"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "caller": "internal",
+                "providerId": "tits",
+                "providerKey": {
+                    "categoryId": "tits-activate-trigger",
+                    "actions": [
+                        "70500522-be3b-4c15-a020-37dfcae7e28f"
+                    ]
+                },
+                "bypass_cooldown": false,
+                "context": {}
+            }
+        ],
+        "cooldown": 2000,
         "log": true,
         "enabled": true
     },
@@ -69,7 +105,79 @@
                 "context": {}
             }
         ],
-        "cooldown": 100,
+        "cooldown": 120000,
+        "log": true,
+        "enabled": true
+    },
+    {
+        "id": "pet",
+        "name": "Pet Command",
+        "events": [
+            {
+                "event": "tiktok-chat",
+                "conditions": [
+                    {
+                        "order": 0,
+                        "data_path": "data.comment",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "equals",
+                        "value": "!pet"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "caller": "internal",
+                "providerId": "tits",
+                "providerKey": {
+                    "categoryId": "tits-activate-trigger",
+                    "actions": [
+                        "823ca254-bbb4-49c3-9a5d-0dee936780d6"
+                    ]
+                },
+                "bypass_cooldown": false,
+                "context": {}
+            }
+        ],
+        "cooldown": 4000,
+        "log": true,
+        "enabled": true
+    },
+    {
+        "id": "bonk",
+        "name": "Bonk Command",
+        "events": [
+            {
+                "event": "tiktok-chat",
+                "conditions": [
+                    {
+                        "order": 0,
+                        "data_path": "data.comment",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "equals",
+                        "value": "!bonk"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "caller": "internal",
+                "providerId": "tits",
+                "providerKey": {
+                    "categoryId": "tits-activate-trigger",
+                    "actions": [
+                        "940da99b-f003-4ab9-988f-b88595cb9aea"
+                    ]
+                },
+                "bypass_cooldown": false,
+                "context": {}
+            }
+        ],
+        "cooldown": 0,
         "log": true,
         "enabled": true
     },
@@ -137,7 +245,7 @@
         "enabled": true
     },
     {
-        "id": "toktts",
+        "id": "tts",
         "name": "TTS for Tiktok",
         "events": [
             {
@@ -355,6 +463,99 @@
                     "platform": "${platform}",
                     "action": "unset_cooldown",
                     "itemId": "args(${data.comment})[2]"
+                }
+            }
+        ],
+        "cooldown": 0,
+        "log": true,
+        "enabled": true
+    },
+    {
+        "id": "b0871e56-355b-4b59-81b0-53fc82db3f1a",
+        "name": "Mod - Trigger - Global Cooldown",
+        "events": [
+            {
+                "event": "tiktok-chat",
+                "conditions": [
+                    {
+                        "order": 0,
+                        "data_path": "isModerator",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "equals",
+                        "value": true
+                    },
+                    {
+                        "order": 1,
+                        "data_path": "data.comment",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "starts_with",
+                        "value": "!gcd"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "caller": "internal",
+                "providerId": "internal-api",
+                "providerKey": {
+                    "categoryId": "internal-commands",
+                    "actions": [
+                        "ModifyTrigger"
+                    ]
+                },
+                "context": {
+                    "triggerId": "args(${data.comment})[1]",
+                    "action": "cooldown",
+                    "data": "args(${data.comment})[2]"
+                }
+            }
+        ],
+        "cooldown": 0,
+        "log": true,
+        "enabled": true
+    },
+    {
+        "id": "042a4ddf-7abf-4dfd-8839-c272384b0345",
+        "name": "Mod - Trigger - Global Toggle",
+        "events": [
+            {
+                "event": "tiktok-chat",
+                "conditions": [
+                    {
+                        "order": 0,
+                        "data_path": "isModerator",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "equals",
+                        "value": true
+                    },
+                    {
+                        "order": 1,
+                        "data_path": "data.comment",
+                        "negate": false,
+                        "ignore_case": true,
+                        "operation": "starts_with",
+                        "value": "!gt"
+                    }
+                ]
+            }
+        ],
+        "actions": [
+            {
+                "caller": "internal",
+                "providerId": "internal-api",
+                "providerKey": {
+                    "categoryId": "internal-commands",
+                    "actions": [
+                        "ModifyTrigger"
+                    ]
+                },
+                "context": {
+                    "triggerId": "args(${data.comment})[1]",
+                    "action": "toggle"
                 }
             }
         ],

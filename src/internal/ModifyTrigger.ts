@@ -1,3 +1,4 @@
+import { ne } from '@faker-js/faker';
 import { ContextLike } from '../providers/backend/InternalRequest';
 import { TriggerManager } from '../triggers/TriggerManager';
 import { Trigger } from '../triggers/backend/Trigger';
@@ -29,7 +30,7 @@ export class ModifyTrigger extends InternalAction {
 				this.toggleTrigger(triggerContext.triggerId);
 				break;
 			case TriggerActions.COOLDOWN:
-				this.changeCooldown(triggerContext.triggerId, parseInt(triggerContext.data));
+				this.changeCooldown(triggerContext.triggerId, parseFloat(triggerContext.data));
 				break;
 			case TriggerActions.REPALCE:
 				this.replaceTrigger(triggerContext.triggerId, Trigger.fromObject(triggerContext.data));
@@ -43,6 +44,12 @@ export class ModifyTrigger extends InternalAction {
 
 	changeCooldown(triggerId: string, newCooldown: number) {
 		const trigger: Trigger = this.triggersManager.getTrigger(triggerId);
+
+		// If in seconds, convert to milliseconds
+		if (newCooldown < 1000) {
+			newCooldown *= 1000;
+		}
+
 		const limitedCooldown = Math.max(0, newCooldown);
 
 		if (trigger === undefined) {
