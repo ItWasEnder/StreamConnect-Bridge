@@ -273,7 +273,7 @@
                 }
             }
         ],
-        "cooldown": 0,
+        "cooldown": 30000,
         "log": true,
         "enabled": true
     },

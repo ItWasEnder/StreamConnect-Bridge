@@ -81,9 +81,23 @@ export class TriggerManager extends Emitting {
 		this.triggers.set(trigger.id, trigger);
 
 		if (trigger.enabled) {
-			for (const event of trigger.events) {
-				this.getEventTriggers(event.event).push(trigger);
+			this.registerEvents(trigger);
+		}
+	}
+
+	unregisterEvents(trigger: Trigger) {
+		for (const event of trigger.events) {
+			const eventTriggers = this.getEventTriggers(event.event);
+			const index = eventTriggers.findIndex((t) => t.id === trigger.id);
+			if (index !== -1) {
+				eventTriggers.splice(index, 1);
 			}
+		}
+	}
+
+	registerEvents(trigger: Trigger) {
+		for (const event of trigger.events) {
+			this.getEventTriggers(event.event).push(trigger);
 		}
 	}
 
@@ -104,13 +118,7 @@ export class TriggerManager extends Emitting {
 	removeTrigger(id: string): boolean {
 		if (this.triggers.has(id)) {
 			const trigger = this.triggers.get(id)!;
-			for (const event of trigger.events) {
-				const eventTriggers = this.getEventTriggers(event.event);
-				const index = eventTriggers.findIndex((t) => t.id === trigger.id);
-				if (index !== -1) {
-					eventTriggers.splice(index, 1);
-				}
-			}
+			this.unregisterEvents(trigger);
 		}
 
 		return this.triggers.delete(id);
@@ -282,7 +290,7 @@ export class TriggerManager extends Emitting {
 				if (this.triggers.has(trigger.id)) {
 					trigger.id = crypto.randomUUID();
 				}
-				
+
 				this.addTrigger(trigger);
 			}
 

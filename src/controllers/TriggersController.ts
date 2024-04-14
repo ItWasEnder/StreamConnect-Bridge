@@ -32,8 +32,26 @@ export class TriggersController {
 	async updateTrigger(req: Request, res: Response): Promise<void> {
 		try {
 			console.log(req.body);
+			const updated = Trigger.fromObject(req.body);
+			const trigger = this.triggerManager.getTrigger(updated.id);
 
-			res.json({ message: 'Trigger updated' });
+			if (trigger === undefined) {
+				res.status(404).json({ error: 'Trigger not found' });
+				return;
+			}
+
+			this.triggerManager.unregisterEvents(trigger);
+
+			trigger.name = updated.name;
+			trigger.enabled = updated.enabled;
+			trigger.log = updated.log;
+			trigger.cooldown = updated.cooldown;
+			trigger.events = updated.events;
+			trigger.actions = updated.actions;
+
+			this.triggerManager.registerEvents(updated);
+
+			res.json({ message: 'Trigger updated', data: trigger });
 		} catch (error) {
 			res.status(500).json({ error: error.message });
 		}
