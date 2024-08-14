@@ -239,7 +239,7 @@ async function handleCommand(action: string) {
 
 function printMainMenu() {
 	console.log(
-		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge! See commands below. (${process.pid})`
+		`${Text.coloredPill(Text.COLORS.BLUE)} Welcome to StreamConnect-Bridge v1.1.0! See commands below. (${process.pid})`
 	);
 	console.log(`-  Q exit the program.`);
 	console.log(`-  H see a list of commands.`);
